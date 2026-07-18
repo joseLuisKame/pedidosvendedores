@@ -75,6 +75,26 @@ def _import_listas_precio(rows):
     return count
 
 
+def _import_precios(rows):
+    count = 0
+    for row in rows:
+        articulo_codigo = (row.get("articulo_codigo") or row.get("articulo") or "").strip()
+        lista_codigo = (row.get("lista_codigo") or row.get("lista") or "").strip()
+        precio = row.get("precio", 0)
+        if not articulo_codigo or not lista_codigo:
+            continue
+        articulo = Articulo.objects.filter(codigo=articulo_codigo).first()
+        lista = ListaPrecio.objects.filter(codigo=lista_codigo).first()
+        if articulo and lista:
+            PrecioArticulo.objects.update_or_create(
+                articulo=articulo,
+                lista=lista,
+                defaults={"precio": Decimal(str(precio))},
+            )
+            count += 1
+    return count
+
+
 def _import_clientes(rows):
     count = 0
     for row in rows:
@@ -254,6 +274,14 @@ def import_master_files(request):
             if "codigo" in headers and "nombre" in headers:
                 imported = _import_listas_precio(rows)
                 return render(request, "import_master_files.html", {"message": f"Se importaron {imported} listas de precio."})
+
+            if "articulo_codigo" in headers and "lista_codigo" in headers:
+                imported = _import_precios(rows)
+                return render(request, "import_master_files.html", {"message": f"Se importaron {imported} precios."})
+
+            if "articulo" in headers and "lista" in headers:
+                imported = _import_precios(rows)
+                return render(request, "import_master_files.html", {"message": f"Se importaron {imported} precios."})
 
             return render(request, "import_master_files.html", {"message": "El archivo no tiene la estructura esperada."})
     return render(request, "import_master_files.html")
