@@ -11,9 +11,10 @@
     {% endif %}
 
     {% if not draft.cliente_codigo %}
-    <form method="post">
+    <form method="post" id="form-cliente">
         {% csrf_token %}
-        <input type="hidden" name="action" value="crear_cabecera">
+        <input type="hidden" name="action" id="action-field" value="crear_cabecera">
+        <input type="hidden" name="cliente_codigo" id="cliente-codigo-field" value="">
         <label>Fecha</label>
         <input type="date" name="fecha" value="{{ draft.fecha }}" required>
         <label>Cliente</label>
@@ -161,7 +162,7 @@
             const q = this.value.trim().toLowerCase();
             if (!q) { clienteResults.innerHTML = ''; return; }
             const f = clientes.filter(c => c.codigo.toLowerCase().includes(q) || c.razon_social.toLowerCase().includes(q) || (c.nombre_fantasia && c.nombre_fantasia.toLowerCase().includes(q))).slice(0, 5);
-            clienteResults.innerHTML = f.length ? f.map(c => `<div class="result-item" onclick="document.getElementById('cliente-busqueda').value='${c.codigo} - ${c.razon_social}'; document.querySelector('input[name=action][value=crear_cabecera]').value='crear_cabecera'; this.closest('form').submit();"><strong>${c.codigo}</strong> - ${c.razon_social}</div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
+            clienteResults.innerHTML = f.length ? f.map(c => `<div class="result-item" onclick="document.getElementById('cliente-busqueda').value='${c.codigo} - ${c.razon_social}'; document.getElementById('action-field').value='seleccionar_cliente'; document.getElementById('cliente-codigo-field').value='${c.codigo}'; document.getElementById('form-cliente').submit();"><strong>${c.codigo}</strong> - ${c.razon_social}</div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
         });
     }
     const articuloInput = document.getElementById('articulo-busqueda');
