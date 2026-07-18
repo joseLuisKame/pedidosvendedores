@@ -11,7 +11,7 @@
 <div class="card">
     <div class="table-wrapper">
         <table>
-            <tr><th>Codigo</th><th>Descripcion</th><th>Rubro</th><th>Marca</th><th>Stock</th></tr>
+            <tr><th>Codigo</th><th>Descripcion</th><th>Rubro</th><th>Marca</th><th>Stock</th><th></th></tr>
             {% for articulo in articulos %}
             <tr>
                 <td><strong>{{ articulo.codigo }}</strong></td>
@@ -19,10 +19,41 @@
                 <td>{{ articulo.rubro }}</td>
                 <td>{{ articulo.marca }}</td>
                 <td>{{ articulo.stock }}</td>
+                <td><button type="button" class="btn-info-sm" onclick="abrirPrecios('{{ articulo.codigo }}', '{{ articulo.descripcion|escapejs }}')">i</button></td>
             </tr>
             {% endfor %}
         </table>
     </div>
 </div>
 {% endif %}
+
+<div id="modal-precios" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this)cerrarPrecios();">
+    <div style="background:white; border-radius:12px; padding:20px; width:min(100%, 340px); box-shadow:0 10px 25px rgba(0,0,0,0.15); max-height:80vh; overflow-y:auto;">
+        <h4 style="margin:0 0 4px 0; font-size:14px; font-weight:600; color:var(--gray-900);" id="precios-articulo-nombre"></h4>
+        <p style="margin:0 0 16px 0; font-size:12px; color:var(--gray-400);">Listas de precio y precios</p>
+        <div id="precios-lista"></div>
+        <button onclick="cerrarPrecios()" style="width:100%; margin-top:16px; background:var(--primary); color:white; border:none; border-radius:8px; padding:10px; font-weight:600; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const preciosPorArticulo = {{ precios_por_articulo|safe }};
+
+    function abrirPrecios(codigo, descripcion) {
+        const precios = preciosPorArticulo[codigo] || [];
+        document.getElementById('precios-articulo-nombre').textContent = codigo + ' - ' + descripcion;
+        const body = document.getElementById('precios-lista');
+        if (precios.length === 0) {
+            body.innerHTML = '<p style="color:var(--gray-400); padding:12px 0;">Sin precios cargados</p>';
+        } else {
+            body.innerHTML = precios.map(p => `<div class="info-row" style="padding:8px 0; border-bottom:1px solid var(--gray-100);"><span class="label">${p.lista}</span><span class="value" style="color:var(--primary);">$${p.precio}</span></div>`).join('');
+        }
+        document.getElementById('modal-precios').style.display = 'flex';
+    }
+    function cerrarPrecios() {
+        document.getElementById('modal-precios').style.display = 'none';
+    }
+</script>
 {% endblock %}

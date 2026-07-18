@@ -688,7 +688,20 @@ def articulos(request):
         ).order_by("descripcion")
     else:
         lista = Articulo.objects.all().order_by("descripcion")
-    return render(request, "articulos.html", {"articulos": lista, "q": q})
+
+    precios_por_articulo = {}
+    precios_qs = PrecioArticulo.objects.select_related("lista").all()
+    for p in precios_qs:
+        cod = p.articulo.codigo
+        if cod not in precios_por_articulo:
+            precios_por_articulo[cod] = []
+        precios_por_articulo[cod].append({
+            "lista": p.lista.nombre,
+            "lista_codigo": p.lista.codigo,
+            "precio": str(p.precio),
+        })
+
+    return render(request, "articulos.html", {"articulos": lista, "q": q, "precios_por_articulo": precios_por_articulo})
 
 
 def pedido_offline(request):
