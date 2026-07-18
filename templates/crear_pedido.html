@@ -51,13 +51,13 @@
     {% if items %}
     <div class="table-wrapper">
         <table>
-            <tr><th>Articulo</th><th>Cant.</th><th>Precio</th><th></th><th></th></tr>
+            <tr><th>Articulo</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th></th></tr>
             {% for item in items %}
             <tr>
                 <td>{{ item.descripcion }}</td>
                 <td>{{ item.cantidad }}</td>
+                <td>${{ item.precio }}</td>
                 <td><strong>${{ item.subtotal }}</strong></td>
-                <td><button type="button" class="btn-info-sm" onclick="abrirDetalle({{ forloop.counter0 }}, '{{ item.codigo }}', '{{ item.descripcion }}', '{{ item.stock }}', '{{ item.cantidad }}', '{{ item.precio }}', '{{ item.subtotal }}')">i</button></td>
                 <td>
                     <form method="post" style="display:inline;" onsubmit="return confirm('Eliminar?');">
                         {% csrf_token %}
@@ -176,34 +176,5 @@
             articuloResults.innerHTML = f.length ? f.map(a => `<div class="result-item" onclick="document.getElementById('articulo-busqueda').value='${a.codigo}'; articuloResults.innerHTML='';"><strong>${a.codigo}</strong> - ${a.descripcion}</div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
         });
     }
-
-    function abrirDetalle(idx, codigo, descripcion, stock, cantidad, precio, subtotal) {
-        const lista = '{{ cliente_lista_nombre|default:"-" }}';
-        document.getElementById('det-codigo').textContent = codigo;
-        document.getElementById('det-descripcion').textContent = descripcion;
-        document.getElementById('det-stock').textContent = stock;
-        document.getElementById('det-cantidad').textContent = cantidad;
-        document.getElementById('det-lista').textContent = lista;
-        document.getElementById('det-precio').textContent = '$' + precio;
-        document.getElementById('det-subtotal').textContent = '$' + subtotal;
-        document.getElementById('modal-detalle').style.display = 'flex';
-    }
-    function cerrarDetalle() {
-        document.getElementById('modal-detalle').style.display = 'none';
-    }
 </script>
-
-<div id="modal-detalle" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this)cerrarDetalle();">
-    <div style="background:white; border-radius:12px; padding:20px; width:min(100%, 320px); box-shadow:0 10px 25px rgba(0,0,0,0.15);">
-        <h4 style="margin:0 0 16px 0; font-size:16px; font-weight:600;">Detalle del articulo</h4>
-        <div class="info-row" style="padding:6px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Codigo</span><span class="value" id="det-codigo"></span></div>
-        <div class="info-row" style="padding:6px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Articulo</span><span class="value" id="det-descripcion" style="text-align:right; max-width:180px;"></span></div>
-        <div class="info-row" style="padding:6px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Stock</span><span class="value" id="det-stock"></span></div>
-        <div class="info-row" style="padding:6px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Cantidad</span><span class="value" id="det-cantidad"></span></div>
-        <div class="info-row" style="padding:6px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Lista precio</span><span class="value" id="det-lista"></span></div>
-        <div class="info-row" style="padding:6px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Precio unit.</span><span class="value" id="det-precio" style="color:var(--primary);"></span></div>
-        <div class="info-row" style="padding:6px 0;"><span class="label" style="font-weight:700; color:var(--gray-900);">Subtotal</span><span class="value" id="det-subtotal" style="color:var(--primary); font-size:18px;"></span></div>
-        <button onclick="cerrarDetalle()" style="width:100%; margin-top:16px; background:var(--primary); color:white; border:none; border-radius:8px; padding:10px; font-weight:600; cursor:pointer;">Cerrar</button>
-    </div>
-</div>
 {% endblock %}
