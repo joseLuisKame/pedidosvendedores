@@ -1,26 +1,28 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="card">
-    <h3>Artículos</h3>
+    <h3>Articulos</h3>
     <form method="get">
-        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por código, descripción, rubro o marca">
-        <button type="submit">Buscar</button>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por codigo, descripcion o marca...">
+        <button type="submit" class="btn btn-primary">Buscar</button>
     </form>
-    {% if articulos %}
-    <table style="width:100%; border-collapse:collapse; margin-top:12px;">
-        <tr><th>Código</th><th>Descripción</th><th>Rubro</th><th>Marca</th><th>Stock</th></tr>
-        {% for articulo in articulos %}
-        <tr>
-            <td>{{ articulo.codigo }}</td>
-            <td>{{ articulo.descripcion }}</td>
-            <td>{{ articulo.rubro }}</td>
-            <td>{{ articulo.marca }}</td>
-            <td>{{ articulo.stock }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-        <p>No se encontraron artículos.</p>
-    {% endif %}
 </div>
+{% if articulos %}
+<div class="card">
+    <div class="table-wrapper">
+        <table>
+            <tr><th>Codigo</th><th>Descripcion</th><th>Rubro</th><th>Marca</th><th>Stock</th></tr>
+            {% for articulo in articulos %}
+            <tr>
+                <td><strong>{{ articulo.codigo }}</strong></td>
+                <td>{{ articulo.descripcion }}</td>
+                <td>{{ articulo.rubro }}</td>
+                <td>{{ articulo.marca }}</td>
+                <td>{{ articulo.stock }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

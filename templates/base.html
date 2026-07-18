@@ -3,109 +3,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0d6efd">
+    <meta name="theme-color" content="#1a1a2e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Pedidos">
     <link rel="manifest" href="/static/manifest.json">
     <link rel="apple-touch-icon" href="/static/icon-192.png">
     <title>Pedidos Vendedores</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="/static/db.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; background: #f5f7fb; color: #222; }
-        .container { max-width: 900px; margin: 0 auto; padding: 16px; }
-        .card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
-        nav a { margin-right: 10px; color: #0d6efd; text-decoration: none; }
-        input, select, button { width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; }
-        button { background: #0d6efd; color: white; border: none; cursor: pointer; }
-        .grid { display: grid; gap: 12px; }
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-        .stat { background: #eef4ff; padding: 12px; border-radius: 8px; }
-        #offline-banner { display: none; background: #ffc107; color: #333; padding: 8px; text-align: center; font-size: 14px; }
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --warning: #f59e0b;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gray-100);
+            color: var(--gray-800);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app-bar {
+            background: var(--primary);
+            color: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+        }
+        .app-bar h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .app-bar small {
+            opacity: 0.8;
+            font-size: 12px;
+        }
+        .nav {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0 16px;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .nav::-webkit-scrollbar { display: none; }
+        .nav a {
+            display: inline-block;
+            padding: 14px 16px;
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav a:hover, .nav a.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+            border: 1px solid var(--gray-200);
+        }
+        .card h2, .card h3, .card h4 {
+            color: var(--gray-900);
+            margin-bottom: 16px;
+        }
+        .card h2 { font-size: 22px; font-weight: 700; }
+        .card h3 { font-size: 18px; font-weight: 600; }
+        .card h4 { font-size: 16px; font-weight: 600; }
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 6px;
+            margin-top: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        label:first-child { margin-top: 0; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--gray-300);
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-family: inherit;
+            color: var(--gray-800);
+            background: white;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        input::placeholder { color: var(--gray-400); }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: var(--success-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: var(--danger-dark); }
+        .btn-outline {
+            background: white;
+            color: var(--gray-700);
+            border: 1.5px solid var(--gray-300);
+        }
+        .btn-outline:hover { background: var(--gray-50); border-color: var(--gray-400); }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+            margin-top: 0;
+            width: auto;
+        }
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .btn-group .btn { margin-top: 0; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .stat {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+        .stat:nth-child(2) { background: linear-gradient(135deg, var(--success), var(--success-dark)); }
+        .stat:nth-child(3) { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .stat .number {
+            font-size: 28px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .stat .label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        .result-item {
+            padding: 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            margin-top: 8px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+        .result-item:hover {
+            border-color: var(--primary);
+            background: var(--gray-50);
+        }
+        .result-item.selected {
+            border-color: var(--success);
+            background: #ecfdf5;
+        }
+        .result-item strong {
+            color: var(--gray-900);
+        }
+        .result-item small {
+            color: var(--gray-500);
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: var(--gray-50);
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+        td {
+            padding: 12px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--gray-100);
+            color: var(--gray-700);
+        }
+        tr:hover td { background: var(--gray-50); }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .label { color: var(--gray-500); font-size: 13px; margin: 0; }
+        .info-row .value { color: var(--gray-900); font-weight: 600; text-align: right; }
+        .msg-success {
+            background: #ecfdf5;
+            color: #065f46;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            border: 1px solid #a7f3d0;
+            font-size: 14px;
+        }
+        .msg-error {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            border: 1px solid #fecaca;
+            font-size: 14px;
+        }
+        .msg-info {
+            background: #eff6ff;
+            color: #1e40af;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            border: 1px solid #bfdbfe;
+            font-size: 14px;
+        }
+        #offline-banner {
+            display: none;
+            background: var(--warning);
+            color: var(--gray-800);
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
         #offline-banner.show { display: block; }
-        #sync-badge { position: fixed; bottom: 16px; right: 16px; background: #198754; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; display: none; z-index: 9999; }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray-400);
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        @media (max-width: 480px) {
+            .container { padding: 12px; }
+            .card { padding: 16px; }
+            .stats { grid-template-columns: 1fr; }
+            .stat { padding: 20px; }
+        }
     </style>
 </head>
 <body>
-    <div id="offline-banner">Sin conexión - Los pedidos se guardan localmente</div>
-    <div id="sync-badge">Sincronizando...</div>
+    <div id="offline-banner">Sin conexion - Modo offline activo</div>
+    <div class="app-bar">
+        <h1>Pedidos Vendedores</h1>
+        <small>Sistema de toma de pedidos</small>
+    </div>
+    <nav class="nav">
+        <a href="/">Inicio</a>
+        <a href="/pedido-offline/">Offline</a>
+        <a href="/crear-pedido/">Crear Pedido</a>
+        <a href="/pedidos/">Pedidos</a>
+        <a href="/clientes/">Clientes</a>
+        <a href="/articulos/">Articulos</a>
+        <a href="/importar/">Importar</a>
+    </nav>
     <div class="container">
-        <nav class="card">
-            <a href="/">Inicio</a>
-            <a href="/clientes/">Clientes</a>
-            <a href="/articulos/">Artículos</a>
-            <a href="/pedido-offline/">Pedido Offline</a>
-            <a href="/crear-pedido/">Crear pedido</a>
-            <a href="/pedidos/">Pedidos</a>
-            <a href="/importar/">Importar CSV</a>
-            <a href="/exportar-pedidos/">Exportar CSV</a>
-        </nav>
         {% block content %}{% endblock %}
     </div>
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js').then(reg => {
-                console.log('SW registered');
-            });
-        }
-
-        const offlineBanner = document.getElementById('offline-banner');
-        const syncBadge = document.getElementById('sync-badge');
-
-        function updateOnlineStatus() {
+        const banner = document.getElementById('offline-banner');
+        function updateStatus() {
             if (navigator.onLine) {
-                offlineBanner.classList.remove('show');
-                syncPendingOrders();
+                banner.classList.remove('show');
             } else {
-                offlineBanner.classList.add('show');
+                banner.classList.add('show');
             }
         }
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
-
-        async function syncPendingOrders() {
-            try {
-                const pedidos = await PedidosDB.getPedidosPendientes();
-                if (pedidos.length === 0) return;
-                syncBadge.style.display = 'block';
-                syncBadge.textContent = `Sincronizando ${pedidos.length} pedidos...`;
-                const response = await fetch('/api/sync/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pedidos })
-                });
-                if (response.ok) {
-                    await PedidosDB.clearPedidosPendientes();
-                    syncBadge.textContent = 'Sincronizado!';
-                    setTimeout(() => { syncBadge.style.display = 'none'; }, 2000);
-                }
-            } catch (err) {
-                syncBadge.style.display = 'none';
-            }
-        }
-
-        async function syncMasterData() {
-            try {
-                const response = await fetch('/api/data/');
-                if (response.ok) {
-                    const data = await response.json();
-                    await PedidosDB.saveData(data);
-                }
-            } catch (err) {
-                console.log('Offline - usando datos cacheados');
-            }
-        }
-
-        syncMasterData();
-
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data.type === 'sync-complete') {
-                syncBadge.textContent = 'Sincronizado!';
-                syncBadge.style.display = 'block';
-                setTimeout(() => { syncBadge.style.display = 'none'; }, 2000);
-            }
-        });
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        updateStatus();
     </script>
     {% block scripts %}{% endblock %}
 </body>

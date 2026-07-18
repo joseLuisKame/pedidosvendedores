@@ -3,24 +3,25 @@
 <div class="card">
     <h3>Clientes</h3>
     <form method="get">
-        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por código, razón social o nombre de fantasía">
-        <button type="submit">Buscar</button>
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar por codigo o nombre...">
+        <button type="submit" class="btn btn-primary">Buscar</button>
     </form>
-    {% if clientes %}
-    <table style="width:100%; border-collapse:collapse; margin-top:12px;">
-        <tr><th>Código</th><th>Razón Social</th><th>Nombre Fantasía</th><th>Localidad</th><th>Vendedor</th></tr>
-        {% for cliente in clientes %}
-        <tr>
-            <td>{{ cliente.codigo }}</td>
-            <td>{{ cliente.razon_social }}</td>
-            <td>{{ cliente.nombre_fantasia }}</td>
-            <td>{{ cliente.localidad }}</td>
-            <td>{{ cliente.codigo_vendedor }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-        <p>No se encontraron clientes.</p>
-    {% endif %}
 </div>
+{% if clientes %}
+<div class="card">
+    <div class="table-wrapper">
+        <table>
+            <tr><th>Codigo</th><th>Razon Social</th><th>Localidad</th><th>Vendedor</th></tr>
+            {% for cliente in clientes %}
+            <tr>
+                <td><strong>{{ cliente.codigo }}</strong></td>
+                <td>{{ cliente.razon_social }}</td>
+                <td>{{ cliente.localidad }}</td>
+                <td>{{ cliente.codigo_vendedor }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

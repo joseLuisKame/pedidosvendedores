@@ -2,16 +2,24 @@
 {% block content %}
 <div class="card">
     <h3>Pedidos</h3>
-    {% for pedido in pedidos %}
-        <div class="card">
-            <a href="/pedidos/{{ pedido.id_pedido }}/"><strong>Pedido {{ pedido.id_pedido }}</strong></a><br>
-            Vendedor: {{ pedido.vendedor_codigo }}<br>
-            Cliente: {{ pedido.cliente.razon_social }}<br>
-            Estado: {{ pedido.estado }}<br>
-            Total: ${{ pedido.total }}
-        </div>
-    {% empty %}
-        <p>No hay pedidos cargados.</p>
-    {% endfor %}
+    {% if pedidos %}
+    <div class="table-wrapper">
+        <table>
+            <tr><th>#</th><th>Cliente</th><th>Estado</th><th>Total</th></tr>
+            {% for pedido in pedidos %}
+            <tr onclick="location.href='/pedidos/{{ pedido.id_pedido }}/'" style="cursor:pointer;">
+                <td><strong>{{ pedido.id_pedido }}</strong></td>
+                <td>{{ pedido.cliente.razon_social }}</td>
+                <td><span class="badge badge-pending">{{ pedido.estado }}</span></td>
+                <td><strong>${{ pedido.total }}</strong></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No hay pedidos cargados</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -6,37 +6,109 @@
     <meta name="theme-color" content="#0d6efd">
     <link rel="manifest" href="/static/manifest.json">
     <title>Pedidos Offline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3651d4;
+            --primary-light: #eef0ff;
+            --success: #10b981;
+            --success-dark: #059669;
+            --success-light: #ecfdf5;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --danger-light: #fef2f2;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+            --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1), 0 6px 10px rgba(0,0,0,0.06);
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: Arial, sans-serif; background: #f5f7fb; color: #222; padding: 16px; }
-        .card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
-        h3 { margin-bottom: 12px; }
-        label { display: block; margin-top: 12px; font-weight: bold; }
-        input, button { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-        button { background: #0d6efd; color: white; border: none; cursor: pointer; }
-        .btn-green { background: #198754; }
-        .btn-red { background: #dc3545; }
-        .btn-gray { background: #6c757d; }
-        .result { padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 4px; cursor: pointer; background: white; }
-        .result-selected { background: #d4edda; }
-        .error { color: #b91c1c; }
-        .success { color: #166534; }
+        body { font-family: 'Inter', Arial, sans-serif; background: var(--gray-50); color: var(--gray-800); padding: 16px; line-height: 1.6; min-height: 100vh; }
+        .card { background: white; border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 16px; }
+        h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--gray-900); }
+        h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--gray-700); }
+        label { display: block; margin-top: 16px; font-weight: 600; font-size: 13px; color: var(--gray-600); margin-bottom: 6px; }
+        input[type="text"], input[type="number"], input[type="date"] { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 16px; font-family: inherit; transition: border-color 0.15s, box-shadow 0.15s; background: white; }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        button { width: 100%; padding: 12px; margin-top: 8px; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background-color 0.15s, transform 0.1s; }
+        button:active { transform: scale(0.98); }
+        button { background: var(--primary); color: white; }
+        button:hover { background: var(--primary-dark); }
+        .btn-green { background: var(--success); }
+        .btn-green:hover { background: var(--success-dark); }
+        .btn-red { background: var(--danger); }
+        .btn-red:hover { background: var(--danger-dark); }
+        .btn-gray { background: var(--gray-200); color: var(--gray-700); }
+        .btn-gray:hover { background: var(--gray-300); }
+        .result { padding: 12px 14px; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm); margin-top: 8px; cursor: pointer; background: white; transition: border-color 0.15s, background-color 0.15s; }
+        .result:hover { border-color: var(--primary); background: var(--primary-light); }
+        .result-selected { background: var(--success-light); border-color: var(--success); }
+        .error { color: var(--danger); font-size: 14px; font-weight: 500; }
+        .success { color: var(--success); font-size: 14px; font-weight: 500; }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { padding: 8px; border: 1px solid #ddd; text-align: left; font-size: 14px; }
-        th { background: #f0f0f0; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); text-align: left; font-size: 14px; }
+        th { background: var(--gray-50); font-weight: 600; color: var(--gray-600); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        tr:hover td { background: var(--gray-50); }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: var(--success-light); color: var(--success); }
+        .badge-warning { background: #fef3c7; color: #d97706; }
+        .badge-info { background: var(--primary-light); color: var(--primary); }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+        .info-row .label { font-size: 13px; color: var(--gray-500); }
+        .info-row .value { font-weight: 600; color: var(--gray-900); }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .stat { text-align: center; padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); }
+        .stat .number { font-size: 24px; font-weight: 700; color: var(--primary); }
+        .stat .label { font-size: 11px; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 16px; }
+        .btn-group button { flex: 1; }
+        .step-header { background: var(--primary-light); padding: 16px; border-radius: var(--radius-sm); margin-bottom: 16px; }
+        .step-header p { margin: 4px 0; font-size: 14px; }
+        .step-header strong { color: var(--gray-900); }
+        .empty-state { text-align: center; padding: 32px 16px; color: var(--gray-400); }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h3>Estado</h3>
-    <p id="status-msg" class="success"></p>
-    <p id="error-msg" class="error"></p>
-    <p>Clientes: <strong id="clientes-count">0</strong> | Artículos: <strong id="articulos-count">0</strong> | Pendientes: <strong id="pendientes-count">0</strong></p>
-    <p>Última sync: <strong id="last-sync">-</strong></p>
-    <div style="display:flex; gap:8px; margin-top:12px;">
-        <button onclick="cargarDatos()" style="flex:1;">Actualizar datos</button>
-        <button onclick="sincronizar()" class="btn-green" style="flex:1;">Sincronizar</button>
+    <div class="stats">
+        <div class="stat">
+            <div class="number" id="clientes-count">0</div>
+            <div class="label">Clientes</div>
+        </div>
+        <div class="stat">
+            <div class="number" id="articulos-count">0</div>
+            <div class="label">Articulos</div>
+        </div>
+        <div class="stat">
+            <div class="number" id="pendientes-count">0</div>
+            <div class="label">Pendientes</div>
+        </div>
+    </div>
+    <div class="info-row">
+        <span class="label">Ultima sync</span>
+        <span class="value" id="last-sync">-</span>
+    </div>
+    <p id="status-msg" class="success" style="margin-top:8px;"></p>
+    <p id="error-msg" class="error" style="margin-top:8px;"></p>
+    <div class="btn-group">
+        <button onclick="cargarDatos()">Actualizar datos</button>
+        <button onclick="sincronizar()" class="btn-green">Sincronizar</button>
     </div>
 </div>
 
@@ -48,14 +120,14 @@
         <input type="date" id="fecha">
         
         <label>Cliente</label>
-        <input type="text" id="cliente-input" placeholder="Escribí para buscar...">
+        <input type="text" id="cliente-input" placeholder="Escribi para buscar...">
         <div id="cliente-results"></div>
         
         <button onclick="confirmarCliente()">Confirmar cliente</button>
     </div>
     
     <div id="paso2" style="display:none;">
-        <div style="background:#eef4ff; padding:12px; border-radius:8px; margin-bottom:12px;">
+        <div class="step-header">
             <p><b>Fecha:</b> <span id="ver-fecha"></span></p>
             <p><b>Cliente:</b> <span id="ver-cliente"></span></p>
             <p><b>Vendedor:</b> <span id="ver-vendedor"></span></p>
@@ -67,21 +139,24 @@
             <label>Cantidad</label>
             <input type="number" id="cantidad" value="1" min="1">
             
-            <label>Artículo</label>
-            <input type="text" id="articulo-input" placeholder="Escribí para buscar...">
+            <label>Articulo</label>
+            <input type="text" id="articulo-input" placeholder="Escribi para buscar...">
             <div id="articulo-results"></div>
             
-            <div style="display:flex; gap:8px; margin-top:12px;">
-                <button onclick="agregarItem()" style="flex:1;">Agregar</button>
-                <button onclick="cancelarItem()" class="btn-gray" style="flex:1;">Cancelar</button>
+            <div class="btn-group">
+                <button onclick="agregarItem()">Agregar</button>
+                <button onclick="cancelarItem()" class="btn-gray">Cancelar</button>
             </div>
         </div>
         
-        <button id="btn-nuevo-item" onclick="mostrarFormItem()">Nuevo ítem</button>
+        <button id="btn-nuevo-item" onclick="mostrarFormItem()">Nuevo item</button>
         
-        <div style="margin-top:16px;">
-            <p><b>Total: $<span id="total">0</span></b></p>
-            <button onclick="guardarPedido()">Guardar pedido</button>
+        <div style="margin-top:20px; border-top:2px solid var(--gray-200); padding-top:16px;">
+            <div class="info-row">
+                <span class="label" style="font-size:16px; color:var(--gray-900);">Total</span>
+                <span class="value" style="font-size:24px; color:var(--primary);">$<span id="total">0</span></span>
+            </div>
+            <button onclick="guardarPedido()" class="btn-green" style="margin-top:12px;">Guardar pedido</button>
             <button onclick="cancelarPedido()" class="btn-red" style="margin-top:8px;">Cancelar</button>
         </div>
     </div>
@@ -169,7 +244,7 @@ async function init() {
         document.getElementById('last-sync').textContent = sync ? new Date(sync.value).toLocaleString() : 'Nunca';
         
         if (clientes.length === 0) {
-            document.getElementById('status-msg').textContent = 'Conectate a la WiFi y tocá "Actualizar datos"';
+            document.getElementById('status-msg').textContent = 'Conectate a la WiFi y toca "Actualizar datos"';
         }
         
         var hoy = new Date();
@@ -239,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             var html = '';
             for (var j = 0; j < res.length; j++) {
-                html += '<div class="result" onclick="selArticulo(\'' + res[j].codigo + '\')"><b>' + res[j].codigo + '</b> - ' + res[j].descripcion + '<br><small>Stock: ' + res[j].stock + '</small></div>';
+                html += '<div class="result" onclick="selArticulo(\'' + res[j].codigo + '\')"><b>' + res[j].codigo + '</b> - ' + res[j].descripcion + '<br><small style="color:var(--gray-400);">Stock: ' + res[j].stock + '</small></div>';
             }
             div.innerHTML = html;
         } catch (err) {
@@ -261,7 +336,7 @@ async function selCliente(codigo) {
 }
 
 function confirmarCliente() {
-    if (!clienteActual) { document.getElementById('error-msg').textContent = 'Seleccioná un cliente'; return; }
+    if (!clienteActual) { document.getElementById('error-msg').textContent = 'Selecciona un cliente'; return; }
     document.getElementById('error-msg').textContent = '';
     document.getElementById('ver-fecha').textContent = document.getElementById('fecha').value;
     document.getElementById('ver-cliente').textContent = clienteActual.codigo + ' - ' + clienteActual.razon_social;
@@ -290,7 +365,7 @@ async function selArticulo(codigo) {
         if (todos[i].codigo === codigo) {
             articuloActual = todos[i];
             document.getElementById('articulo-input').value = codigo + ' - ' + todos[i].descripcion;
-            document.getElementById('articulo-results').innerHTML = '<div class="result result-selected"><b>' + codigo + '</b> - ' + todos[i].descripcion + '<br><small>Stock: ' + todos[i].stock + '</small></div>';
+            document.getElementById('articulo-results').innerHTML = '<div class="result result-selected"><b>' + codigo + '</b> - ' + todos[i].descripcion + '<br><small style="color:var(--gray-400);">Stock: ' + todos[i].stock + '</small></div>';
             return;
         }
     }
@@ -313,7 +388,7 @@ async function getPrecio(clienteCodigo, articuloCodigo) {
 }
 
 async function agregarItem() {
-    if (!articuloActual) { document.getElementById('error-msg').textContent = 'Seleccioná un artículo'; return; }
+    if (!articuloActual) { document.getElementById('error-msg').textContent = 'Selecciona un articulo'; return; }
     var cant = parseInt(document.getElementById('cantidad').value) || 1;
     var precio = await getPrecio(clienteActual.codigo, articuloActual.codigo);
     items.push({
@@ -336,10 +411,10 @@ function eliminarItem(i) {
 
 function renderItems() {
     var total = 0;
-    var html = '<table><tr><th>Artículo</th><th>Cant</th><th>Precio</th><th>Subtotal</th><th></th></tr>';
+    var html = '<table><tr><th>Articulo</th><th>Cant</th><th>Precio</th><th>Subtotal</th><th></th></tr>';
     for (var i = 0; i < items.length; i++) {
         total += items[i].subtotal;
-        html += '<tr><td>' + items[i].descripcion + '</td><td>' + items[i].cantidad + '</td><td>$' + items[i].precio + '</td><td>$' + items[i].subtotal + '</td><td><button class="btn-red" onclick="eliminarItem(' + i + ')" style="width:auto;padding:4px 8px;">X</button></td></tr>';
+        html += '<tr><td>' + items[i].descripcion + '</td><td>' + items[i].cantidad + '</td><td>$' + items[i].precio + '</td><td><strong>$' + items[i].subtotal + '</strong></td><td><button class="btn-red" onclick="eliminarItem(' + i + ')" style="width:auto;padding:4px 10px;font-size:13px;">X</button></td></tr>';
     }
     html += '</table>';
     document.getElementById('items-list').innerHTML = html;
@@ -347,7 +422,7 @@ function renderItems() {
 }
 
 async function guardarPedido() {
-    if (!items.length) { document.getElementById('error-msg').textContent = 'Agregá ítems'; return; }
+    if (!items.length) { document.getElementById('error-msg').textContent = 'Agrega items'; return; }
     var pedido = {
         fecha: document.getElementById('fecha').value,
         cliente_codigo: clienteActual.codigo,
@@ -390,7 +465,7 @@ async function cargarDatos() {
             init();
         }
     } catch (e) {
-        document.getElementById('error-msg').textContent = 'Error de conexión';
+        document.getElementById('error-msg').textContent = 'Error de conexion';
     }
 }
 
@@ -411,7 +486,7 @@ async function sincronizar() {
             init();
         }
     } catch (e) {
-        document.getElementById('error-msg').textContent = 'Error de conexión';
+        document.getElementById('error-msg').textContent = 'Error de conexion';
     }
 }
 </script>

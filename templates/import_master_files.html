@@ -2,14 +2,15 @@
 {% block content %}
 <div class="card">
     <h3>Importar archivos maestros</h3>
-    <p>Subí un CSV con artículos, clientes o listas de precio.</p>
+    <p style="color:var(--gray-500); margin-bottom:16px;">Subi un CSV con artículos, clientes, listas de precio o precios.</p>
     {% if message %}
-        <p><strong>{{ message }}</strong></p>
+        <div class="msg-success">{{ message }}</div>
     {% endif %}
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        <input type="file" name="csv_file" required>
-        <button type="submit">Importar</button>
+        <label>Archivo CSV</label>
+        <input type="file" name="csv_file" required accept=".csv">
+        <button type="submit" class="btn btn-primary">Importar</button>
     </form>
 </div>
 {% endblock %}

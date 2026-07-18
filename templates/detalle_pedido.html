@@ -3,30 +3,34 @@
 <div class="card">
     <h3>Detalle del Pedido</h3>
     {% if error %}
-        <p style="color:#b91c1c;">{{ error }}</p>
-        <a href="/pedidos/">Volver a pedidos</a>
+    <div class="msg-error">{{ error }}</div>
+    <a href="/pedidos/" class="btn btn-outline" style="text-decoration:none;">Volver</a>
     {% else %}
-    <p><strong>Pedido:</strong> {{ pedido.id_pedido }}</p>
-    <p><strong>Fecha:</strong> {{ pedido.fecha }}</p>
-    <p><strong>Cliente:</strong> {{ pedido.cliente.razon_social }} ({{ pedido.cliente.codigo }})</p>
-    <p><strong>Vendedor:</strong> {{ pedido.vendedor_codigo }}</p>
-    <p><strong>Estado:</strong> {{ pedido.estado }}</p>
-
-    <h4>Ítems</h4>
-    <table style="width:100%; border-collapse:collapse;">
-        <tr><th>Artículo</th><th>Descripción</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr>
-        {% for detalle in pedido.detalles.all %}
-        <tr>
-            <td>{{ detalle.articulo.codigo }}</td>
-            <td>{{ detalle.articulo.descripcion }}</td>
-            <td>{{ detalle.cantidad }}</td>
-            <td>${{ detalle.precio }}</td>
-            <td>${{ detalle.subtotal }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <p><strong>Total: ${{ pedido.total }}</strong></p>
-    <a href="/pedidos/">Volver a pedidos</a>
+    <div class="info-row"><span class="label">Pedido</span><span class="value">{{ pedido.id_pedido }}</span></div>
+    <div class="info-row"><span class="label">Fecha</span><span class="value">{{ pedido.fecha }}</span></div>
+    <div class="info-row"><span class="label">Cliente</span><span class="value">{{ pedido.cliente.razon_social }}</span></div>
+    <div class="info-row"><span class="label">Vendedor</span><span class="value">{{ pedido.vendedor_codigo }}</span></div>
+    <div class="info-row"><span class="label">Estado</span><span class="value"><span class="badge badge-pending">{{ pedido.estado }}</span></span></div>
+    
+    <h4 style="margin-top:20px;">Items</h4>
+    <div class="table-wrapper">
+        <table>
+            <tr><th>Articulo</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr>
+            {% for detalle in pedido.detalles.all %}
+            <tr>
+                <td>{{ detalle.articulo.descripcion }}</td>
+                <td>{{ detalle.cantidad }}</td>
+                <td>${{ detalle.precio }}</td>
+                <td><strong>${{ detalle.subtotal }}</strong></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <div class="info-row" style="margin-top:12px; border-top:2px solid var(--gray-200); padding-top:16px;">
+        <span class="label" style="font-size:16px; color:var(--gray-900);">Total</span>
+        <span class="value" style="font-size:20px; color:var(--primary);">${{ pedido.total }}</span>
+    </div>
+    <a href="/pedidos/" class="btn btn-outline" style="text-decoration:none; margin-top:16px;">Volver</a>
     {% endif %}
 </div>
 {% endblock %}
