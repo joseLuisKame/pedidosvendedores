@@ -298,6 +298,8 @@ def _get_precio_articulo(cliente, articulo):
         return Decimal("0")
     lista = ListaPrecio.objects.filter(codigo=cliente.codigo_lista_precio).first()
     if not lista:
+        lista = ListaPrecio.objects.filter(codigo=cliente.codigo_lista_precio.zfill(2)).first()
+    if not lista:
         return Decimal("0")
     precio_obj = PrecioArticulo.objects.filter(articulo=articulo, lista=lista).first()
     return precio_obj.precio if precio_obj else Decimal("0")

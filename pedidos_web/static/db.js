@@ -155,8 +155,10 @@ const PedidosDB = {
         if (!cliente || !cliente.codigo_lista_precio) return 0;
 
         const precios = await this.getPrecios();
+        const lista = cliente.codigo_lista_precio;
+        const listaPadded = lista.length === 1 ? '0' + lista : lista;
         const precio = precios.find(p =>
-            p.articulo_codigo === articuloCodigo && p.lista_codigo === cliente.codigo_lista_precio
+            p.articulo_codigo === articuloCodigo && (p.lista_codigo === lista || p.lista_codigo === listaPadded)
         );
         return precio ? precio.precio : 0;
     }
