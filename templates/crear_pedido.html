@@ -156,6 +156,8 @@
         { codigo: "{{ a.codigo }}", descripcion: "{{ a.descripcion }}" }{% if not forloop.last %},{% endif %}
         {% endfor %}
     ];
+    const preciosPorArticulo = {{ precios_por_articulo|safe }};
+
     const clienteInput = document.getElementById('cliente-busqueda');
     const clienteResults = document.getElementById('cliente-results');
     if (clienteInput && clienteResults) {
@@ -166,6 +168,22 @@
             clienteResults.innerHTML = f.length ? f.map(c => `<div class="result-item" onclick="document.getElementById('cliente-busqueda').value='${c.codigo} - ${c.razon_social}'; document.getElementById('action-field').value='seleccionar_cliente'; document.getElementById('cliente-codigo-field').value='${c.codigo}'; document.getElementById('form-cliente').submit();"><strong>${c.codigo}</strong> - ${c.razon_social}</div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
         });
     }
+
+    function abrirPrecios(codigo, descripcion) {
+        const precios = preciosPorArticulo[codigo] || [];
+        document.getElementById('precios-articulo-nombre').textContent = codigo + ' - ' + descripcion;
+        const body = document.getElementById('precios-lista');
+        if (precios.length === 0) {
+            body.innerHTML = '<p style="color:var(--gray-400); padding:12px 0;">Sin precios cargados</p>';
+        } else {
+            body.innerHTML = precios.map(p => `<div class="info-row" style="padding:8px 0; border-bottom:1px solid var(--gray-100);"><span class="label">${p.lista}</span><span class="value" style="color:var(--primary);">$${p.precio}</span></div>`).join('');
+        }
+        document.getElementById('modal-precios').style.display = 'flex';
+    }
+    function cerrarPrecios() {
+        document.getElementById('modal-precios').style.display = 'none';
+    }
+
     const articuloInput = document.getElementById('articulo-busqueda');
     const articuloResults = document.getElementById('articulo-results');
     if (articuloInput && articuloResults) {
@@ -173,8 +191,17 @@
             const q = this.value.trim().toLowerCase();
             if (!q) { articuloResults.innerHTML = ''; return; }
             const f = articulos.filter(a => a.codigo.toLowerCase().includes(q) || a.descripcion.toLowerCase().includes(q)).slice(0, 5);
-            articuloResults.innerHTML = f.length ? f.map(a => `<div class="result-item" onclick="document.getElementById('articulo-busqueda').value='${a.codigo}'; articuloResults.innerHTML='';"><strong>${a.codigo}</strong> - ${a.descripcion}</div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
+            articuloResults.innerHTML = f.length ? f.map(a => `<div class="result-item" style="display:flex; align-items:center; justify-content:space-between;"><span onclick="document.getElementById('articulo-busqueda').value='${a.codigo}'; articuloResults.innerHTML='';" style="cursor:pointer; flex:1;"><strong>${a.codigo}</strong> - ${a.descripcion}</span><button type="button" class="btn-info-sm" onclick="event.stopPropagation(); abrirPrecios('${a.codigo}', '${a.descripcion.replace(/'/g, "\\'")}')">i</button></div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
         });
     }
 </script>
+
+<div id="modal-precios" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this)cerrarPrecios();">
+    <div style="background:white; border-radius:12px; padding:20px; width:min(100%, 340px); box-shadow:0 10px 25px rgba(0,0,0,0.15); max-height:80vh; overflow-y:auto;">
+        <h4 style="margin:0 0 4px 0; font-size:14px; font-weight:600; color:var(--gray-900);" id="precios-articulo-nombre"></h4>
+        <p style="margin:0 0 16px 0; font-size:12px; color:var(--gray-400);">Listas de precio y precios</p>
+        <div id="precios-lista"></div>
+        <button onclick="cerrarPrecios()" style="width:100%; margin-top:16px; background:var(--primary); color:white; border:none; border-radius:8px; padding:10px; font-weight:600; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
 {% endblock %}

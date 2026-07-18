@@ -346,6 +346,18 @@ def crear_pedido(request):
         for articulo in Articulo.objects.order_by("descripcion", "codigo")[:100]
     ]
 
+    precios_por_articulo = {}
+    precios_qs = PrecioArticulo.objects.select_related("lista").all()
+    for p in precios_qs:
+        cod = p.articulo.codigo
+        if cod not in precios_por_articulo:
+            precios_por_articulo[cod] = []
+        precios_por_articulo[cod].append({
+            "lista": p.lista.nombre,
+            "lista_codigo": p.lista.codigo,
+            "precio": str(p.precio),
+        })
+
     items_display = []
     total_pedido = Decimal("0")
     for item in draft.get("items", []):
@@ -636,6 +648,7 @@ def crear_pedido(request):
         "clientes_sugeridos": clientes_sugeridos,
         "articulos_sugeridos": articulos_sugeridos,
         "cliente_lista_nombre": cliente_lista_nombre,
+        "precios_por_articulo": precios_por_articulo,
     })
 
 
