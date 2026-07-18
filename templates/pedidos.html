@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Pedidos</h3>
+    {% for pedido in pedidos %}
+        <div class="card">
+            <a href="/pedidos/{{ pedido.id_pedido }}/"><strong>Pedido {{ pedido.id_pedido }}</strong></a><br>
+            Vendedor: {{ pedido.vendedor_codigo }}<br>
+            Cliente: {{ pedido.cliente.razon_social }}<br>
+            Estado: {{ pedido.estado }}<br>
+            Total: ${{ pedido.total }}
+        </div>
+    {% empty %}
+        <p>No hay pedidos cargados.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Detalle del Pedido</h3>
+    {% if error %}
+        <p style="color:#b91c1c;">{{ error }}</p>
+        <a href="/pedidos/">Volver a pedidos</a>
+    {% else %}
+    <p><strong>Pedido:</strong> {{ pedido.id_pedido }}</p>
+    <p><strong>Fecha:</strong> {{ pedido.fecha }}</p>
+    <p><strong>Cliente:</strong> {{ pedido.cliente.razon_social }} ({{ pedido.cliente.codigo }})</p>
+    <p><strong>Vendedor:</strong> {{ pedido.vendedor_codigo }}</p>
+    <p><strong>Estado:</strong> {{ pedido.estado }}</p>
+
+    <h4>Ítems</h4>
+    <table style="width:100%; border-collapse:collapse;">
+        <tr><th>Artículo</th><th>Descripción</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr>
+        {% for detalle in pedido.detalles.all %}
+        <tr>
+            <td>{{ detalle.articulo.codigo }}</td>
+            <td>{{ detalle.articulo.descripcion }}</td>
+            <td>{{ detalle.cantidad }}</td>
+            <td>${{ detalle.precio }}</td>
+            <td>${{ detalle.subtotal }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <p><strong>Total: ${{ pedido.total }}</strong></p>
+    <a href="/pedidos/">Volver a pedidos</a>
+    {% endif %}
+</div>
+{% endblock %}

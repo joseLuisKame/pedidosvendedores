@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Tomar pedido (Offline)</h3>
+    <p style="color:#166534;" id="status-msg"></p>
+    <p style="color:#b91c1c;" id="error-msg"></p>
+
+    <div id="sync-section" class="card" style="background:#e8f5e9;">
+        <h4>Estado de datos</h4>
+        <p>Última sync: <span id="last-sync">-</span></p>
+        <p>Clientes cargados: <strong id="clientes-count">0</strong></p>
+        <p>Artículos cargados: <strong id="articulos-count">0</strong></p>
+        <p>Pedidos pendientes: <strong id="pendientes-count">0</strong></p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button onclick="recargarDatos()" style="flex:1; background:#0d6efd;">Cargar/Actualizar datos</button>
+            <button onclick="sincronizar()" style="flex:1; background:#198754;">Sincronizar pedidos</button>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Nuevo pedido</h3>
+
+    <div id="form-paso1">
+        <label>Fecha</label>
+        <input type="date" id="fecha" required style="background:white;">
+
+        <label>Cliente (escribí para buscar)</label>
+        <input type="text" id="cliente-input" placeholder="Código o nombre del cliente" autocomplete="off">
+        <div id="cliente-results" style="margin-top:8px;"></div>
+
+        <button onclick="confirmarCliente()" style="margin-top:12px;">Confirmar cliente</button>
+    </div>
+
+    <div id="form-paso2" style="display:none;">
+        <div class="card">
+            <h4>Cabecera</h4>
+            <p><strong>Fecha:</strong> <span id="view-fecha"></span></p>
+            <p><strong>Cliente:</strong> <span id="view-cliente"></span></p>
+            <p><strong>Vendedor:</strong> <span id="view-vendedor"></span></p>
+        </div>
+
+        <div id="items-list"></div>
+
+        <div id="form-item" style="display:none;">
+            <label>Cantidad</label>
+            <input type="number" id="item-cantidad" value="1" min="1">
+
+            <label>Artículo (escribí para buscar)</label>
+            <input type="text" id="articulo-input" placeholder="Código o descripción del artículo" autocomplete="off">
+            <div id="articulo-results" style="margin-top:8px;"></div>
+
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button onclick="agregarItem()" style="flex:1;">Agregar</button>
+                <button onclick="cancelarItem()" style="flex:1; background:#6c757d;">Cancelar</button>
+            </div>
+        </div>
+
+        <div id="item-actions" style="display:none;">
+            <button onclick="mostrarFormulario()">Nuevo ítem</button>
+        </div>
+
+        <div id="pedido-actions" style="margin-top:16px;">
+            <p><strong>Total: $<span id="total-pedido">0</span></strong></p>
+            <button onclick="guardarPedido()">Guardar pedido</button>
+            <button onclick="cancelarPedido()" style="background:#dc3545; margin-top:8px;">Cancelar pedido</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let clienteSeleccionado = null;
+    let items = [];
+    let articuloSeleccionado = null;
+
+    function setFecha() {
+        const fechaInput = document.getElementById('fecha');
+        if (fechaInput) {
+            const hoy = new Date();
+            const año = hoy.getFullYear();
+            const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoy.getDate()).padStart(2, '0');
+            fechaInput.value = `${año}-${mes}-${dia}`;
+        }
+    }
+    setFecha();
+
+    async function init() {
+        try {
+            await actualizarEstadisticas();
+            const clientes = await PedidosDB.getClientes();
+            if (clientes.length === 0) {
+                document.getElementById('status-msg').innerHTML = '<strong>Necesitás cargar datos primero. Conectate a la WiFi de la PC y tocá "Cargar/Actualizar datos".</strong>';
+            }
+            cargarClientes();
+        } catch (err) {
+            console.error('Error init:', err);
+            document.getElementById('error-msg').textContent = 'Error al inicializar. Intentá recargar la página.';
+        }
+    }
+
+    async function actualizarEstadisticas() {
+        const clientes = await PedidosDB.getClientes();
+        const articulos = await PedidosDB.getArticulos();
+        const pendientes = await PedidosDB.getPedidosPendientes();
+        const lastSync = await PedidosDB.getLastSync();
+
+        document.getElementById('clientes-count').textContent = clientes.length;
+        document.getElementById('articulos-count').textContent = articulos.length;
+        document.getElementById('pendientes-count').textContent = pendientes.length;
+        document.getElementById('last-sync').textContent = lastSync ? new Date(lastSync).toLocaleString() : 'Nunca';
+    }
+
+    async function cargarClientes() {
+        const clientes = await PedidosDB.getClientes();
+        const container = document.getElementById('cliente-results');
+        if (clientes.length === 0) {
+            container.innerHTML = '<p style="color:#b91c1c;">No hay clientes cargados. Presioná "Cargar/Actualizar datos".</p>';
+        }
+    }
+
+    async function recargarDatos() {
+        if (!navigator.onLine) {
+            document.getElementById('error-msg').textContent = 'Sin internet. Conectate a la WiFi de la PC para cargar datos.';
+            return;
+        }
+        document.getElementById('status-msg').textContent = 'Descargando datos del servidor...';
+        document.getElementById('error-msg').textContent = '';
+        try {
+            const response = await fetch('/api/data/');
+            if (response.ok) {
+                const data = await response.json();
+                await PedidosDB.saveData(data);
+                document.getElementById('status-msg').textContent = 'Datos cargados correctamente. Ahora podés usar la app offline.';
+                document.getElementById('last-sync').textContent = new Date().toLocaleString();
+                await actualizarEstadisticas();
+                cargarClientes();
+            } else {
+                document.getElementById('error-msg').textContent = 'Error al descargar datos.';
+            }
+        } catch (err) {
+            document.getElementById('error-msg').textContent = 'No se pudo conectar al servidor. Verificá que estés en la misma WiFi que la PC.';
+        }
+    }
+
+    document.getElementById('cliente-input').addEventListener('input', async function() {
+        const texto = this.value.trim();
+        const container = document.getElementById('cliente-results');
+        if (!texto) {
+            container.innerHTML = '';
+            return;
+        }
+        try {
+            const clientes = await PedidosDB.getClientes();
+            const lower = texto.toLowerCase();
+            const resultados = clientes.filter(c =>
+                c.codigo.toLowerCase().includes(lower) ||
+                c.razon_social.toLowerCase().includes(lower) ||
+                (c.nombre_fantasia && c.nombre_fantasia.toLowerCase().includes(lower))
+            ).slice(0, 5);
+
+            if (resultados.length === 0) {
+                container.innerHTML = '<p style="color:#b91c1c;">No se encontró ningún cliente.</p>';
+                return;
+            }
+
+            container.innerHTML = resultados.map(c => `
+                <div onclick="seleccionarCliente('${c.codigo}')" style="padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:4px; cursor:pointer; background:white;">
+                    <strong>${c.codigo}</strong> - ${c.razon_social}
+                    ${c.nombre_fantasia ? '<br><small>' + c.nombre_fantasia + '</small>' : ''}
+                </div>
+            `).join('');
+        } catch (err) {
+            container.innerHTML = '<p style="color:#b91c1c;">Error al buscar clientes.</p>';
+        }
+    });
+
+    function seleccionarCliente(codigo) {
+        PedidosDB.getClientes().then(clientes => {
+            const cliente = clientes.find(c => c.codigo === codigo);
+            if (cliente) {
+                document.getElementById('cliente-input').value = `${cliente.codigo} - ${cliente.razon_social}`;
+                document.getElementById('cliente-results').innerHTML = `
+                    <div style="padding:10px; background:#d4edda; border-radius:6px; margin-top:4px;">
+                        <strong>${cliente.codigo}</strong> - ${cliente.razon_social}
+                        ${cliente.nombre_fantasia ? '<br><small>' + cliente.nombre_fantasia + '</small>' : ''}
+                    </div>
+                `;
+                clienteSeleccionado = cliente;
+            }
+        });
+    }
+
+    function confirmarCliente() {
+        if (!clienteSeleccionado) {
+            document.getElementById('error-msg').textContent = 'Seleccioná un cliente de la lista.';
+            return;
+        }
+        document.getElementById('error-msg').textContent = '';
+        document.getElementById('view-fecha').textContent = document.getElementById('fecha').value;
+        document.getElementById('view-cliente').textContent = `${clienteSeleccionado.codigo} - ${clienteSeleccionado.razon_social}`;
+        document.getElementById('view-vendedor').textContent = clienteSeleccionado.codigo_vendedor || '-';
+        document.getElementById('form-paso1').style.display = 'none';
+        document.getElementById('form-paso2').style.display = 'block';
+        document.getElementById('item-actions').style.display = 'block';
+    }
+
+    function mostrarFormulario() {
+        articuloSeleccionado = null;
+        document.getElementById('articulo-input').value = '';
+        document.getElementById('articulo-results').innerHTML = '';
+        document.getElementById('form-item').style.display = 'block';
+        document.getElementById('item-actions').style.display = 'none';
+    }
+
+    function cancelarItem() {
+        document.getElementById('form-item').style.display = 'none';
+        document.getElementById('item-actions').style.display = 'block';
+    }
+
+    document.getElementById('articulo-input').addEventListener('input', async function() {
+        const texto = this.value.trim();
+        const container = document.getElementById('articulo-results');
+        if (!texto) {
+            container.innerHTML = '';
+            return;
+        }
+        const articulos = await PedidosDB.searchArticulos(texto);
+
+        if (articulos.length === 0) {
+            container.innerHTML = '<p style="color:#b91c1c;">No se encontró ningún artículo.</p>';
+            return;
+        }
+
+        container.innerHTML = articulos.map(a => `
+            <div onclick="seleccionarArticulo('${a.codigo}')" style="padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:4px; cursor:pointer; background:white;">
+                <strong>${a.codigo}</strong> - ${a.descripcion}
+                <br><small>Stock: ${a.stock} | Marca: ${a.marca || '-'}</small>
+            </div>
+        `).join('');
+    });
+
+    function seleccionarArticulo(codigo) {
+        PedidosDB.searchArticulos(codigo).then(articulos => {
+            const articulo = articulos.find(a => a.codigo === codigo);
+            if (articulo) {
+                articuloSeleccionado = articulo;
+                document.getElementById('articulo-input').value = `${articulo.codigo} - ${articulo.descripcion}`;
+                document.getElementById('articulo-results').innerHTML = `
+                    <div style="padding:10px; background:#d4edda; border-radius:6px; margin-top:4px;">
+                        <strong>${articulo.codigo}</strong> - ${articulo.descripcion}
+                        <br><small>Stock: ${articulo.stock} | Marca: ${articulo.marca || '-'}</small>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    async function agregarItem() {
+        if (!articuloSeleccionado) {
+            document.getElementById('error-msg').textContent = 'Seleccioná un artículo de la lista.';
+            return;
+        }
+        const cantidad = parseInt(document.getElementById('item-cantidad').value) || 1;
+        const precio = await PedidosDB.getPrecioArticulo(clienteSeleccionado.codigo, articuloSeleccionado.codigo);
+        const subtotal = cantidad * precio;
+        items.push({
+            codigo: articuloSeleccionado.codigo,
+            descripcion: articuloSeleccionado.descripcion,
+            stock: articuloSeleccionado.stock,
+            cantidad: cantidad,
+            precio: precio,
+            subtotal: subtotal
+        });
+        actualizarItems();
+        document.getElementById('form-item').style.display = 'none';
+        document.getElementById('item-actions').style.display = 'block';
+        document.getElementById('error-msg').textContent = '';
+    }
+
+    function eliminarItem(index) {
+        items.splice(index, 1);
+        actualizarItems();
+    }
+
+    function actualizarItems() {
+        const container = document.getElementById('items-list');
+        let total = 0;
+        let html = '<table style="width:100%; border-collapse:collapse;"><tr><th>Artículo</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th></th></tr>';
+        items.forEach((item, i) => {
+            total += item.subtotal;
+            html += `<tr>
+                <td>${item.descripcion}</td>
+                <td>${item.cantidad}</td>
+                <td>$${item.precio}</td>
+                <td>$${item.subtotal}</td>
+                <td><button onclick="eliminarItem(${i})" style="background:#dc3545; padding:4px 8px; width:auto;">X</button></td>
+            </tr>`;
+        });
+        html += '</table>';
+        container.innerHTML = html;
+        document.getElementById('total-pedido').textContent = total;
+    }
+
+    async function guardarPedido() {
+        if (items.length === 0) {
+            document.getElementById('error-msg').textContent = 'Agregá al menos un ítem.';
+            return;
+        }
+        const pedido = {
+            fecha: document.getElementById('fecha').value,
+            cliente_codigo: clienteSeleccionado.codigo,
+            vendedor_codigo: clienteSeleccionado.codigo_vendedor || '',
+            items: items
+        };
+        await PedidosDB.savePedidoLocal(pedido);
+        items = [];
+        actualizarItems();
+        document.getElementById('status-msg').textContent = 'Pedido guardado localmente.';
+        document.getElementById('error-msg').textContent = '';
+        await actualizarEstadisticas();
+        clienteSeleccionado = null;
+        document.getElementById('form-paso1').style.display = 'block';
+        document.getElementById('form-paso2').style.display = 'none';
+        document.getElementById('cliente-input').value = '';
+        document.getElementById('cliente-results').innerHTML = '';
+    }
+
+    function cancelarPedido() {
+        items = [];
+        actualizarItems();
+        clienteSeleccionado = null;
+        document.getElementById('form-paso1').style.display = 'block';
+        document.getElementById('form-paso2').style.display = 'none';
+        document.getElementById('cliente-input').value = '';
+        document.getElementById('cliente-results').innerHTML = '';
+    }
+
+    async function sincronizar() {
+        if (!navigator.onLine) {
+            document.getElementById('error-msg').textContent = 'Sin conexión. No se puede sincronizar.';
+            return;
+        }
+        const pendientes = await PedidosDB.getPedidosPendientes();
+        if (pendientes.length === 0) {
+            document.getElementById('status-msg').textContent = 'No hay pedidos pendientes.';
+            return;
+        }
+        document.getElementById('status-msg').textContent = `Sincronizando ${pendientes.length} pedidos...`;
+        try {
+            const response = await fetch('/api/sync/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pedidos: pendientes })
+            });
+            if (response.ok) {
+                await PedidosDB.clearPedidosPendientes();
+                document.getElementById('status-msg').textContent = 'Sincronizado correctamente.';
+                await actualizarEstadisticas();
+            } else {
+                document.getElementById('error-msg').textContent = 'Error al sincronizar.';
+            }
+        } catch (err) {
+            document.getElementById('error-msg').textContent = 'Error de conexión.';
+        }
+    }
+
+    init();
+</script>
+{% endblock %}

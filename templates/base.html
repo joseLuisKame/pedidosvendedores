@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pedidos">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <title>Pedidos Vendedores</title>
+    <script src="/static/db.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f5f7fb; color: #222; }
+        .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+        .card { background: white; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
+        nav a { margin-right: 10px; color: #0d6efd; text-decoration: none; }
+        input, select, button { width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; }
+        button { background: #0d6efd; color: white; border: none; cursor: pointer; }
+        .grid { display: grid; gap: 12px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+        .stat { background: #eef4ff; padding: 12px; border-radius: 8px; }
+        #offline-banner { display: none; background: #ffc107; color: #333; padding: 8px; text-align: center; font-size: 14px; }
+        #offline-banner.show { display: block; }
+        #sync-badge { position: fixed; bottom: 16px; right: 16px; background: #198754; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; display: none; z-index: 9999; }
+    </style>
+</head>
+<body>
+    <div id="offline-banner">Sin conexión - Los pedidos se guardan localmente</div>
+    <div id="sync-badge">Sincronizando...</div>
+    <div class="container">
+        <nav class="card">
+            <a href="/">Inicio</a>
+            <a href="/clientes/">Clientes</a>
+            <a href="/articulos/">Artículos</a>
+            <a href="/pedido-offline/">Pedido Offline</a>
+            <a href="/crear-pedido/">Crear pedido</a>
+            <a href="/pedidos/">Pedidos</a>
+            <a href="/importar/">Importar CSV</a>
+            <a href="/exportar-pedidos/">Exportar CSV</a>
+        </nav>
+        {% block content %}{% endblock %}
+    </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js').then(reg => {
+                console.log('SW registered');
+            });
+        }
+
+        const offlineBanner = document.getElementById('offline-banner');
+        const syncBadge = document.getElementById('sync-badge');
+
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineBanner.classList.remove('show');
+                syncPendingOrders();
+            } else {
+                offlineBanner.classList.add('show');
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        async function syncPendingOrders() {
+            try {
+                const pedidos = await PedidosDB.getPedidosPendientes();
+                if (pedidos.length === 0) return;
+                syncBadge.style.display = 'block';
+                syncBadge.textContent = `Sincronizando ${pedidos.length} pedidos...`;
+                const response = await fetch('/api/sync/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pedidos })
+                });
+                if (response.ok) {
+                    await PedidosDB.clearPedidosPendientes();
+                    syncBadge.textContent = 'Sincronizado!';
+                    setTimeout(() => { syncBadge.style.display = 'none'; }, 2000);
+                }
+            } catch (err) {
+                syncBadge.style.display = 'none';
+            }
+        }
+
+        async function syncMasterData() {
+            try {
+                const response = await fetch('/api/data/');
+                if (response.ok) {
+                    const data = await response.json();
+                    await PedidosDB.saveData(data);
+                }
+            } catch (err) {
+                console.log('Offline - usando datos cacheados');
+            }
+        }
+
+        syncMasterData();
+
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data.type === 'sync-complete') {
+                syncBadge.textContent = 'Sincronizado!';
+                syncBadge.style.display = 'block';
+                setTimeout(() => { syncBadge.style.display = 'none'; }, 2000);
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

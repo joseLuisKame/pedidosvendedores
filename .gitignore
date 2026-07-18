@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+db/*.sqlite3
+pedidos/*/pendientes/*.csv
+pedidos/*/procesados/*.csv
+iniciar_servidor.bat
+sw.js

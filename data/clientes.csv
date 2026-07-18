@@ -1,0 +1,3 @@
+codigo,razon_social,nombre_fantasia,direccion,localidad,provincia,cat_iva,cuit,codigo_vendedor,codigo_lista_precio
+C001,Cliente Uno,Cliente Uno,Sarmiento 100,Córdoba,Córdoba,RI,20-00000000-0,01,LP1
+C002,Cliente Dos,Cliente Dos,San Martín 200,Mendoza,Mendoza,RI,20-00000001-1,02,LP2

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Buscar artículos</h3>
+    <form method="get">
+        <input type="text" name="q" value="{{ q }}" placeholder="Código, descripción, marca o rubro">
+        <button type="submit">Buscar</button>
+    </form>
+    {% if articulos %}
+        <div class="grid">
+            {% for articulo in articulos %}
+                <div class="card">
+                    <strong>{{ articulo.codigo }}</strong> - {{ articulo.descripcion }}<br>
+                    Rubro: {{ articulo.rubro }} | Marca: {{ articulo.marca }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

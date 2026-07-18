@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Importar archivos maestros</h3>
+    <p>Subí un CSV con artículos, clientes o listas de precio.</p>
+    {% if message %}
+        <p><strong>{{ message }}</strong></p>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="csv_file" required>
+        <button type="submit">Importar</button>
+    </form>
+</div>
+{% endblock %}

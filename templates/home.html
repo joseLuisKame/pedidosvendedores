@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h2>Sistema de pedidos para vendedores</h2>
+    <p>Versión inicial para móviles con importación de CSV y creación de pedidos.</p>
+    <div class="stats">
+        <div class="stat"><strong>{{ pedidos_total }}</strong><br>Pedidos</div>
+        <div class="stat"><strong>{{ clientes_total }}</strong><br>Clientes</div>
+        <div class="stat"><strong>{{ articulos_total }}</strong><br>Artículos</div>
+    </div>
+</div>
+{% endblock %}

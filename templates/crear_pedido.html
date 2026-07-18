@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Crear pedido</h3>
+
+    {% if draft.error %}
+        <p style="color:#b91c1c;"><strong>{{ draft.error }}</strong></p>
+    {% endif %}
+    {% if draft.message %}
+        <p style="color:#166534;"><strong>{{ draft.message }}</strong></p>
+    {% endif %}
+
+    {% if not draft.cliente_codigo %}
+    <form method="post" id="cabecera-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="crear_cabecera">
+        <label>Fecha</label>
+        <input type="date" name="fecha" value="{{ draft.fecha }}" required>
+
+        <label>Cliente (escribí para buscar)</label>
+        <input type="text" id="cliente-busqueda" name="cliente_busqueda" value="{{ draft.cliente_busqueda }}" placeholder="Código o nombre del cliente" required autocomplete="off">
+        <div id="cliente-results" style="margin-top:8px;"></div>
+
+        <button type="submit">Buscar cliente</button>
+    </form>
+
+    {% if draft.cliente_results %}
+    <div style="margin-top:12px;">
+        <p><strong>Seleccioná un cliente:</strong></p>
+        {% for cliente in draft.cliente_results %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="seleccionar_cliente">
+            <input type="hidden" name="cliente_codigo" value="{{ cliente.codigo }}">
+            <div style="padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:4px; cursor:pointer; background:white;" onclick="this.submit();">
+                <strong>{{ cliente.codigo }}</strong> - {{ cliente.razon_social }}
+                {% if cliente.nombre_fantasia != '-' %}<br><small>{{ cliente.nombre_fantasia }}</small>{% endif %}
+            </div>
+        </form>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="card">
+        <h4>Cabecera</h4>
+        <p><strong>Fecha:</strong> {{ draft.fecha }}</p>
+        <p><strong>Cliente:</strong> {{ draft.cliente_codigo }}</p>
+        <p><strong>Vendedor:</strong> {{ draft.vendedor_codigo }}</p>
+    </div>
+
+    <div id="items-list">
+        {% if items %}
+        <table style="width:100%; border-collapse:collapse;">
+            <tr><th>Artículo</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th></th></tr>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.descripcion }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>${{ item.precio }}</td>
+                <td>${{ item.subtotal }}</td>
+                <td>
+                    <form method="post" onsubmit="return confirm('¿Eliminar este ítem?');" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="eliminar_item">
+                        <input type="hidden" name="item_index" value="{{ forloop.counter0 }}">
+                        <button type="submit" style="background:#dc3545; padding:4px 8px; width:auto;">X</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <p><strong>Total: ${{ total_pedido }}</strong></p>
+        {% endif %}
+    </div>
+
+    {% if not pending_item and not draft.show_item_form %}
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="nuevo_item">
+        <button type="submit">Nuevo ítem</button>
+    </form>
+    {% endif %}
+
+    {% if draft.show_item_form %}
+    <div style="margin-top:12px; padding:12px; border:1px solid #ddd; border-radius:8px;">
+        <form method="post" id="item-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="preview_item">
+
+            <label>Cantidad</label>
+            <input type="number" name="cantidad" value="1" min="1" step="1" required>
+
+            <label>Artículo (escribí para buscar)</label>
+            <input type="text" id="articulo-busqueda" name="codigo_articulo" placeholder="Código o descripción del artículo" required autocomplete="off">
+            <div id="articulo-results" style="margin-top:8px;"></div>
+
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button type="submit" style="flex:1;">Ver detalle</button>
+                <button type="button" onclick="document.getElementById('cancel-item-btn').click();" style="flex:1; background:#6c757d;">Cancelar</button>
+            </div>
+        </form>
+        <form method="post" id="cancel-item-form" style="display:none;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancelar_item">
+            <button type="submit" id="cancel-item-btn"></button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if pending_item %}
+    <div id="item-preview-modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px;">
+        <div style="background:white; border-radius:12px; padding:20px; width:min(100%, 360px); box-shadow:0 8px 24px rgba(0,0,0,0.25);">
+            <h4 style="margin-top:0;">Detalle del ítem</h4>
+            <p><strong>Artículo:</strong> {{ pending_item.descripcion }}</p>
+            <p><strong>Código:</strong> {{ pending_item.codigo }}</p>
+            <p><strong>Stock:</strong> {{ pending_item.stock }}</p>
+            <p><strong>Cantidad:</strong> {{ pending_item.cantidad }}</p>
+            <p><strong>Precio:</strong> ${{ pending_item.precio }}</p>
+            <p><strong>Subtotal:</strong> ${{ pending_item.subtotal }}</p>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="agregar_item">
+                <button type="submit">Confirmar ítem</button>
+            </form>
+            <form method="post" style="margin-top:8px;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="cancelar_item">
+                <button type="submit" style="background:#6c757d;">Cancelar</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if draft.cliente_codigo %}
+    <div style="margin-top:16px; display:flex; gap:8px;">
+        <form method="post" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancelar_pedido">
+            <button type="submit" style="background:#dc3545;">Cancelar pedido</button>
+        </form>
+        <form method="post" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cerrar_pedido">
+            <button type="submit">Guardar pedido</button>
+        </form>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const clientes = [
+        {% for c in clientes_sugeridos %}
+        { codigo: "{{ c.codigo }}", razon_social: "{{ c.razon_social }}", nombre_fantasia: "{{ c.nombre_fantasia }}" }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const articulos = [
+        {% for a in articulos_sugeridos %}
+        { codigo: "{{ a.codigo }}", descripcion: "{{ a.descripcion }}" }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const clienteInput = document.getElementById('cliente-busqueda');
+    const clienteResults = document.getElementById('cliente-results');
+
+    if (clienteInput && clienteResults) {
+        clienteInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            if (!query) { clienteResults.innerHTML = ''; return; }
+
+            const filtered = clientes.filter(c =>
+                c.codigo.toLowerCase().includes(query) ||
+                c.razon_social.toLowerCase().includes(query) ||
+                c.nombre_fantasia.toLowerCase().includes(query)
+            ).slice(0, 5);
+
+            if (filtered.length === 0) {
+                clienteResults.innerHTML = '<p style="color:#b91c1c;">No se encontró ningún cliente.</p>';
+                return;
+            }
+
+            clienteResults.innerHTML = filtered.map(c => `
+                <div onclick="seleccionarClienteDirecto('${c.codigo}')" style="padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:4px; cursor:pointer; background:white;">
+                    <strong>${c.codigo}</strong> - ${c.razon_social}
+                    ${c.nombre_fantasia ? '<br><small>' + c.nombre_fantasia + '</small>' : ''}
+                </div>
+            `).join('');
+        });
+    }
+
+    function seleccionarClienteDirecto(codigo) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="seleccionar_cliente">
+            <input type="hidden" name="cliente_codigo" value="${codigo}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    const articuloInput = document.getElementById('articulo-busqueda');
+    const articuloResults = document.getElementById('articulo-results');
+
+    if (articuloInput && articuloResults) {
+        articuloInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            if (!query) { articuloResults.innerHTML = ''; return; }
+
+            const filtered = articulos.filter(a =>
+                a.codigo.toLowerCase().includes(query) ||
+                a.descripcion.toLowerCase().includes(query)
+            ).slice(0, 5);
+
+            if (filtered.length === 0) {
+                articuloResults.innerHTML = '<p style="color:#b91c1c;">No se encontró ningún artículo.</p>';
+                return;
+            }
+
+            articuloResults.innerHTML = filtered.map(a => `
+                <div onclick="seleccionarArticulo('${a.codigo}')" style="padding:10px; border:1px solid #ddd; border-radius:6px; margin-top:4px; cursor:pointer; background:white;">
+                    <strong>${a.codigo}</strong> - ${a.descripcion}
+                </div>
+            `).join('');
+        });
+    }
+
+    function seleccionarArticulo(codigo) {
+        articuloInput.value = codigo;
+        articuloResults.innerHTML = '';
+    }
+
+    const modal = document.getElementById('item-preview-modal');
+    if (modal) {
+        setTimeout(() => { modal.style.display = 'flex'; }, 50);
+    }
+</script>
+{% endblock %}

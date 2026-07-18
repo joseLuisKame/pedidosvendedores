@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>Exportar pedidos a CSV</h3>
+    <p>Se generarán archivos por vendedor en la estructura de carpetas pedidos/venXX/pendientes.</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Exportar</button>
+    </form>
+</div>
+{% endblock %}
