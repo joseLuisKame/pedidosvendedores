@@ -619,6 +619,14 @@ def crear_pedido(request):
             request.session.pop("pedido_draft", None)
             return redirect("pedidos")
 
+    cliente_lista_nombre = ""
+    if cliente and cliente.codigo_lista_precio:
+        lista = ListaPrecio.objects.filter(codigo=cliente.codigo_lista_precio).first()
+        if not lista:
+            lista = ListaPrecio.objects.filter(codigo=cliente.codigo_lista_precio.zfill(2)).first()
+        if lista:
+            cliente_lista_nombre = lista.nombre
+
     return render(request, "crear_pedido.html", {
         "draft": draft,
         "cliente": cliente,
@@ -627,6 +635,7 @@ def crear_pedido(request):
         "pending_item": pending_item,
         "clientes_sugeridos": clientes_sugeridos,
         "articulos_sugeridos": articulos_sugeridos,
+        "cliente_lista_nombre": cliente_lista_nombre,
     })
 
 
