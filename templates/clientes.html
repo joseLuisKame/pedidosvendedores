@@ -11,17 +11,61 @@
 <div class="card">
     <div class="table-wrapper">
         <table>
-            <tr><th>Codigo</th><th>Razon Social</th><th>Localidad</th><th>Vendedor</th></tr>
+            <tr><th>Codigo</th><th>Razon Social</th><th>Localidad</th><th>Vendedor</th><th></th></tr>
             {% for cliente in clientes %}
             <tr>
                 <td><strong>{{ cliente.codigo }}</strong></td>
                 <td>{{ cliente.razon_social }}</td>
                 <td>{{ cliente.localidad }}</td>
                 <td>{{ cliente.codigo_vendedor }}</td>
+                <td><button type="button" class="btn-info-sm" onclick="abrirCliente('{{ cliente.codigo }}')">i</button></td>
             </tr>
             {% endfor %}
         </table>
     </div>
 </div>
 {% endif %}
+
+<div id="modal-cliente" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center; padding:16px;" onclick="if(event.target===this)cerrarCliente();">
+    <div style="background:white; border-radius:12px; padding:20px; width:min(100%, 340px); box-shadow:0 10px 25px rgba(0,0,0,0.15); max-height:80vh; overflow-y:auto;">
+        <h4 style="margin:0 0 16px 0; font-size:15px; font-weight:600; color:var(--gray-900);" id="cliente-modal-nombre"></h4>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Codigo</span><span class="value" id="det-codigo"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Razon Social</span><span class="value" id="det-razon"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Nombre Fantasia</span><span class="value" id="det-fantasia"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Direccion</span><span class="value" id="det-direccion"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Localidad</span><span class="value" id="det-localidad"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Provincia</span><span class="value" id="det-provincia"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Cat. IVA</span><span class="value" id="det-iva"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">CUIT</span><span class="value" id="det-cuit"></span></div>
+        <div class="info-row" style="padding:7px 0; border-bottom:1px solid var(--gray-100);"><span class="label">Vendedor</span><span class="value" id="det-vendedor"></span></div>
+        <div class="info-row" style="padding:7px 0;"><span class="label">Lista Precio</span><span class="value" id="det-lista"></span></div>
+        <button onclick="cerrarCliente()" style="width:100%; margin-top:16px; background:var(--primary); color:white; border:none; border-radius:8px; padding:10px; font-weight:600; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const clientesData = {{ clientes_data|safe }};
+
+    function abrirCliente(codigo) {
+        const c = clientesData[codigo];
+        if (!c) return;
+        document.getElementById('cliente-modal-nombre').textContent = c.codigo + ' - ' + c.razon_social;
+        document.getElementById('det-codigo').textContent = c.codigo;
+        document.getElementById('det-razon').textContent = c.razon_social || '-';
+        document.getElementById('det-fantasia').textContent = c.nombre_fantasia || '-';
+        document.getElementById('det-direccion').textContent = c.direccion || '-';
+        document.getElementById('det-localidad').textContent = c.localidad || '-';
+        document.getElementById('det-provincia').textContent = c.provincia || '-';
+        document.getElementById('det-iva').textContent = c.cat_iva || '-';
+        document.getElementById('det-cuit').textContent = c.cuit || '-';
+        document.getElementById('det-vendedor').textContent = c.codigo_vendedor || '-';
+        document.getElementById('det-lista').textContent = c.codigo_lista_precio || '-';
+        document.getElementById('modal-cliente').style.display = 'flex';
+    }
+    function cerrarCliente() {
+        document.getElementById('modal-cliente').style.display = 'none';
+    }
+</script>
 {% endblock %}

@@ -674,7 +674,23 @@ def clientes(request):
         ).order_by("razon_social")
     else:
         lista = Cliente.objects.all().order_by("razon_social")
-    return render(request, "clientes.html", {"clientes": lista, "q": q})
+
+    clientes_data = {}
+    for c in lista:
+        clientes_data[c.codigo] = {
+            "codigo": c.codigo,
+            "razon_social": c.razon_social,
+            "nombre_fantasia": c.nombre_fantasia,
+            "direccion": c.direccion,
+            "localidad": c.localidad,
+            "provincia": c.provincia,
+            "cat_iva": c.cat_iva,
+            "cuit": c.cuit,
+            "codigo_vendedor": c.codigo_vendedor,
+            "codigo_lista_precio": c.codigo_lista_precio,
+        }
+
+    return render(request, "clientes.html", {"clientes": lista, "q": q, "clientes_data": clientes_data})
 
 
 def articulos(request):
