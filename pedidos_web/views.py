@@ -596,6 +596,8 @@ def crear_pedido(request):
                     precio=precio,
                     subtotal=subtotal,
                 )
+                articulo.stock = max(0, articulo.stock - cantidad_dec)
+                articulo.save(update_fields=["stock"])
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             vendor_dir = BASE_DIR / "pedidos" / f"ven{vendedor_codigo}" / "pendientes"
@@ -845,6 +847,8 @@ def api_sync(request):
                 precio=precio,
                 subtotal=subtotal,
             )
+            articulo.stock = max(0, articulo.stock - cantidad)
+            articulo.save(update_fields=["stock"])
 
         pedido.total = total
         pedido.save()
