@@ -509,6 +509,11 @@ def crear_pedido(request):
 
         if action == "agregar_item":
             if draft.get("pending_item"):
+                articulo = Articulo.objects.filter(codigo=draft["pending_item"].get("codigo", "")).first()
+                if articulo:
+                    cant = Decimal(str(draft["pending_item"].get("cantidad", 0)))
+                    articulo.stock = max(0, articulo.stock - cant)
+                    articulo.save(update_fields=["stock"])
                 draft["items"].append(draft["pending_item"])
                 draft["pending_item"] = None
                 draft["show_item_form"] = False
@@ -536,6 +541,12 @@ def crear_pedido(request):
             except ValueError:
                 index = -1
             if 0 <= index < len(draft.get("items", [])):
+                item_eliminado = draft["items"][index]
+                articulo = Articulo.objects.filter(codigo=item_eliminado.get("codigo", "")).first()
+                if articulo:
+                    cant = Decimal(str(item_eliminado.get("cantidad", 0)))
+                    articulo.stock = articulo.stock + cant
+                    articulo.save(update_fields=["stock"])
                 del draft["items"][index]
                 draft["message"] = "Ítem eliminado del pedido."
                 draft["error"] = ""
@@ -546,6 +557,12 @@ def crear_pedido(request):
             return redirect("crear_pedido")
 
         if action == "cancelar_pedido":
+            for item in draft.get("items", []):
+                articulo = Articulo.objects.filter(codigo=item.get("codigo", "")).first()
+                if articulo:
+                    cant = Decimal(str(item.get("cantidad", 0)))
+                    articulo.stock = articulo.stock + cant
+                    articulo.save(update_fields=["stock"])
             request.session.pop("pedido_draft", None)
             return redirect("crear_pedido")
 
@@ -601,8 +618,6 @@ def crear_pedido(request):
                     precio=precio,
                     subtotal=subtotal,
                 )
-                articulo.stock = max(0, articulo.stock - cantidad_dec)
-                articulo.save(update_fields=["stock"])
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             vendor_dir = BASE_DIR / "pedidos" / f"ven{vendedor_codigo}" / "pendientes"
