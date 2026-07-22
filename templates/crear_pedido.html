@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="card">
-    <h3>Crear pedido</h3>
+<div class="card" style="padding:12px;">
+    <h3 style="margin-bottom:8px;">Crear pedido</h3>
 
     {% if draft.error %}
         <div class="msg-error">{{ draft.error }}</div>
@@ -15,17 +15,17 @@
         {% csrf_token %}
         <input type="hidden" name="action" id="action-field" value="crear_cabecera">
         <input type="hidden" name="cliente_codigo" id="cliente-codigo-field" value="">
-        <label>Fecha</label>
-        <input type="date" name="fecha" value="{{ draft.fecha }}" required>
-        <label>Cliente</label>
-        <input type="text" id="cliente-busqueda" name="cliente_busqueda" value="{{ draft.cliente_busqueda }}" placeholder="Escribi para buscar..." autocomplete="off">
+        <label style="margin-top:8px; margin-bottom:4px;">Fecha</label>
+        <input type="date" name="fecha" value="{{ draft.fecha }}" required style="padding:8px 10px;">
+        <label style="margin-top:8px; margin-bottom:4px;">Cliente</label>
+        <input type="text" id="cliente-busqueda" name="cliente_busqueda" value="{{ draft.cliente_busqueda }}" placeholder="Escribi para buscar..." autocomplete="off" style="padding:8px 10px;">
         <div id="cliente-results"></div>
-        <button type="submit" class="btn btn-primary">Buscar cliente</button>
+        <button type="submit" class="btn btn-primary" style="margin-top:8px;">Buscar cliente</button>
     </form>
 
     {% if draft.cliente_results %}
-    <div style="margin-top:16px;">
-        <label>Selecciona un cliente</label>
+    <div style="margin-top:12px;">
+        <label style="margin-bottom:4px;">Selecciona un cliente</label>
         {% for cliente in draft.cliente_results %}
         <form method="post">
             {% csrf_token %}
@@ -41,15 +41,60 @@
     {% endif %}
 
     {% else %}
-    <div style="background:var(--gray-50); border-radius:var(--radius-sm); padding:12px; margin-bottom:12px;">
-        <div class="info-row" style="padding:4px 0;"><span class="label">Fecha</span><span class="value">{{ draft.fecha }}</span></div>
-        <div class="info-row" style="padding:4px 0;"><span class="label">Cliente</span><span class="value">{{ draft.cliente_codigo }} - {{ cliente.razon_social }}</span></div>
-        <div class="info-row" style="padding:4px 0;"><span class="label">Vendedor</span><span class="value">{{ draft.vendedor_codigo }}</span></div>
-        <div class="info-row" style="padding:4px 0;"><span class="label">Lista precio</span><span class="value">{{ cliente_lista_nombre|default:"-" }}</span></div>
+
+    <div style="background:var(--gray-50); border-radius:var(--radius-sm); padding:8px 10px; margin-bottom:8px; display:flex; flex-wrap:wrap; gap:4px 16px; font-size:13px;">
+        <span><b>Fecha:</b> {{ draft.fecha }}</span>
+        <span><b>Cliente:</b> {{ draft.cliente_codigo }} - {{ cliente.razon_social }}</span>
+        <span><b>Vendedor:</b> {{ draft.vendedor_codigo }}</span>
+        <span><b>Lista:</b> {{ cliente_lista_nombre|default:"-" }}</span>
     </div>
 
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
+        {% if not pending_item and not draft.show_item_form %}
+        <form method="post" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="nuevo_item">
+            <button type="submit" class="btn btn-primary" style="margin:0;">+ Item</button>
+        </form>
+        {% endif %}
+        {% if draft.cliente_codigo %}
+        <form method="post" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancelar_pedido">
+            <button type="submit" class="btn btn-danger" style="margin:0;">Cancelar</button>
+        </form>
+        <form method="post" style="flex:1;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cerrar_pedido">
+            <button type="submit" class="btn btn-success" style="margin:0;">Guardar</button>
+        </form>
+        {% endif %}
+    </div>
+
+    {% if draft.show_item_form %}
+    <div style="border:1.5px solid var(--gray-200); border-radius:var(--radius-sm); padding:10px; margin-bottom:8px;">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="preview_item">
+            <div style="display:flex; gap:8px; align-items:end;">
+                <div style="flex:0 0 70px;">
+                    <label style="margin:0; font-size:11px;">Cant.</label>
+                    <input type="number" name="cantidad" value="1" min="1" required style="padding:6px 8px; font-size:14px;">
+                </div>
+                <div style="flex:1;">
+                    <label style="margin:0; font-size:11px;">Articulo</label>
+                    <input type="text" id="articulo-busqueda" name="codigo_articulo" placeholder="Buscar..." autocomplete="off" style="padding:6px 8px; font-size:14px;">
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin:0; padding:6px 12px; font-size:14px;">Ver</button>
+                <a href="?cancelar=1" class="btn btn-outline" style="margin:0; padding:6px 12px; font-size:14px;">X</a>
+            </div>
+            <div id="articulo-results"></div>
+        </form>
+    </div>
+    {% endif %}
+
     {% if items %}
-    <div class="table-wrapper">
+    <div style="max-height:40vh; overflow-y:auto; border:1px solid var(--gray-200); border-radius:var(--radius-sm);">
         <table>
             <tr><th>Articulo</th><th>Cant.</th><th>Precio</th><th>Subtotal</th><th></th></tr>
             {% for item in items %}
@@ -70,51 +115,25 @@
             {% endfor %}
         </table>
     </div>
-    <div class="info-row" style="border-top:2px solid var(--gray-200); padding-top:12px;">
+    <div class="info-row" style="padding:6px 0;">
         <span class="label" style="color:var(--gray-900);">Total</span>
-        <span class="value" style="font-size:18px; color:var(--primary);">${{ total_pedido }}</span>
-    </div>
-    {% endif %}
-
-    {% if not pending_item and not draft.show_item_form %}
-    <form method="post">
-        {% csrf_token %}
-        <input type="hidden" name="action" value="nuevo_item">
-        <button type="submit" class="btn btn-primary">Nuevo item</button>
-    </form>
-    {% endif %}
-
-    {% if draft.show_item_form %}
-    <div style="border:1.5px solid var(--gray-200); border-radius:var(--radius-sm); padding:16px; margin-top:12px;">
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="preview_item">
-            <label>Cantidad</label>
-            <input type="number" name="cantidad" value="1" min="1" required>
-            <label>Articulo</label>
-            <input type="text" id="articulo-busqueda" name="codigo_articulo" placeholder="Escribi para buscar..." autocomplete="off">
-            <div id="articulo-results"></div>
-            <div class="btn-group">
-                <button type="submit" class="btn btn-primary">Ver detalle</button>
-                <a href="?cancelar=1" class="btn btn-outline">Cancelar</a>
-            </div>
-        </form>
+        <span class="value" style="font-size:16px; color:var(--primary);">${{ total_pedido }}</span>
     </div>
     {% endif %}
 
     {% if pending_item %}
     <div style="position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; padding:16px;">
-        <div style="background:white; border-radius:var(--radius); padding:24px; width:min(100%, 360px); box-shadow:var(--shadow-lg);">
-            <h4>Detalle del item</h4>
+        <div style="background:white; border-radius:var(--radius); padding:20px; width:min(100%, 340px); box-shadow:var(--shadow-lg);">
+            <h4 style="margin:0 0 10px;">Detalle del item</h4>
             {% if draft.warning_stock %}
-            <div style="background:#fef3c7; border:1px solid #f59e0b; border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:13px; color:#92400e;">{{ draft.warning_stock }}</div>
+            <div style="background:#fef3c7; border:1px solid #f59e0b; border-radius:8px; padding:8px 10px; margin-bottom:10px; font-size:12px; color:#92400e;">{{ draft.warning_stock }}</div>
             {% endif %}
-            <div class="info-row"><span class="label">Articulo</span><span class="value">{{ pending_item.descripcion }}</span></div>
-            <div class="info-row"><span class="label">Codigo</span><span class="value">{{ pending_item.codigo }}</span></div>
-            <div class="info-row"><span class="label">Stock</span><span class="value">{{ pending_item.stock }}</span></div>
-            <div class="info-row"><span class="label">Cantidad</span><span class="value">{{ pending_item.cantidad }}</span></div>
-            <div class="info-row"><span class="label">Precio</span><span class="value">${{ pending_item.precio }}</span></div>
-            <div class="info-row"><span class="label">Subtotal</span><span class="value">${{ pending_item.subtotal }}</span></div>
+            <div class="info-row" style="padding:4px 0;"><span class="label">Articulo</span><span class="value">{{ pending_item.descripcion }}</span></div>
+            <div class="info-row" style="padding:4px 0;"><span class="label">Codigo</span><span class="value">{{ pending_item.codigo }}</span></div>
+            <div class="info-row" style="padding:4px 0;"><span class="label">Stock</span><span class="value">{{ pending_item.stock }}</span></div>
+            <div class="info-row" style="padding:4px 0;"><span class="label">Cantidad</span><span class="value">{{ pending_item.cantidad }}</span></div>
+            <div class="info-row" style="padding:4px 0;"><span class="label">Precio</span><span class="value">${{ pending_item.precio }}</span></div>
+            <div class="info-row" style="padding:4px 0;"><span class="label">Subtotal</span><span class="value">${{ pending_item.subtotal }}</span></div>
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="agregar_item">
@@ -129,20 +148,6 @@
     </div>
     {% endif %}
 
-    {% if draft.cliente_codigo %}
-    <div class="btn-group" style="margin-top:20px;">
-        <form method="post" style="flex:1;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="cancelar_pedido">
-            <button type="submit" class="btn btn-danger">Cancelar</button>
-        </form>
-        <form method="post" style="flex:1;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="cerrar_pedido">
-            <button type="submit" class="btn btn-success">Guardar pedido</button>
-        </form>
-    </div>
-    {% endif %}
     {% endif %}
 </div>
 {% endblock %}

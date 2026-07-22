@@ -596,12 +596,13 @@ def crear_pedido(request):
                 request.session["pedido_draft"] = _serialize_draft_for_session(draft)
                 return redirect("crear_pedido")
 
-            max_id = Pedido.objects.filter(vendedor_codigo=vendedor_codigo).order_by('-id_pedido').values_list('id_pedido', flat=True).first()
-            if max_id and max_id.isdigit():
-                next_num = (int(max_id) // 10000) + 1
-            else:
-                next_num = 1
-            pedido_id = str(next_num * 10000 + int(vendedor_codigo))
+            todos_ids = list(Pedido.objects.filter(vendedor_codigo=vendedor_codigo).values_list('id_pedido', flat=True))
+            max_num = 0
+            for pid in todos_ids:
+                if pid.isdigit() and int(pid) > max_num:
+                    max_num = int(pid)
+            next_num = (max_num // 100) + 1 if max_num > 0 else 1
+            pedido_id = str(next_num * 100 + int(vendedor_codigo)).zfill(6)
             pedido = Pedido.objects.create(
                 id_pedido=pedido_id,
                 vendedor_codigo=vendedor_codigo,
@@ -835,12 +836,13 @@ def api_sync(request):
         if not cliente:
             continue
 
-        max_id = Pedido.objects.filter(vendedor_codigo=vendedor_codigo).order_by('-id_pedido').values_list('id_pedido', flat=True).first()
-        if max_id and str(max_id).isdigit():
-            next_num = (int(max_id) // 10000) + 1
-        else:
-            next_num = 1
-        pedido_id = str(next_num * 10000 + int(vendedor_codigo))
+        todos_ids = list(Pedido.objects.filter(vendedor_codigo=vendedor_codigo).values_list('id_pedido', flat=True))
+        max_num = 0
+        for pid in todos_ids:
+            if str(pid).isdigit() and int(pid) > max_num:
+                max_num = int(pid)
+        next_num = (max_num // 100) + 1 if max_num > 0 else 1
+        pedido_id = str(next_num * 100 + int(vendedor_codigo)).zfill(6)
 
         total = Decimal('0')
         pedido = Pedido.objects.create(
