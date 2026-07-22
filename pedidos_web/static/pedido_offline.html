@@ -390,6 +390,11 @@ async function getPrecio(clienteCodigo, articuloCodigo) {
 async function agregarItem() {
     if (!articuloActual) { document.getElementById('error-msg').textContent = 'Selecciona un articulo'; return; }
     var cant = parseInt(document.getElementById('cantidad').value) || 1;
+    var stock = parseInt(articuloActual.stock) || 0;
+    if (cant > stock) {
+        var continuar = confirm('El stock de ' + articuloActual.descripcion + ' es ' + stock + ' y solicitas ' + cant + '.\n\nDeseas agregar igualmente?');
+        if (!continuar) return;
+    }
     var precio = await getPrecio(clienteActual.codigo, articuloActual.codigo);
     items.push({
         codigo: articuloActual.codigo,

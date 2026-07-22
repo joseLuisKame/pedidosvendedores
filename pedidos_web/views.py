@@ -320,6 +320,7 @@ def crear_pedido(request):
             "show_item_form": False,
             "message": "",
             "error": "",
+            "warning_stock": "",
             "cliente_busqueda": "",
             "cliente_results": [],
         }
@@ -499,6 +500,10 @@ def crear_pedido(request):
             draft["show_item_form"] = False
             draft["message"] = "Revisá el detalle del ítem antes de agregarlo."
             draft["error"] = ""
+            if preview["cantidad"] > preview["stock"]:
+                draft["warning_stock"] = f"El stock de {preview['descripcion']} es {preview['stock']} y solicitás {preview['cantidad']}."
+            else:
+                draft["warning_stock"] = ""
             request.session["pedido_draft"] = _serialize_draft_for_session(draft)
             return redirect("crear_pedido")
 
