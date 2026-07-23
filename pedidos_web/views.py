@@ -325,6 +325,7 @@ def crear_pedido(request):
             "cliente_results": [],
             "descuento": "0",
             "observaciones": "",
+            "ubicacion": "",
         }
 
     cliente = None
@@ -442,6 +443,7 @@ def crear_pedido(request):
             cliente_codigo = request.POST.get("cliente_codigo", "").strip()
             descuento = request.POST.get("descuento", "0").strip() or "0"
             observaciones = request.POST.get("observaciones", "").strip()
+            ubicacion = request.POST.get("ubicacion", "").strip()
             try:
                 descuento_val = Decimal(descuento)
                 if descuento_val < 0 or descuento_val > 100:
@@ -467,6 +469,7 @@ def crear_pedido(request):
                 "cliente_results": [],
                 "descuento": str(descuento_val),
                 "observaciones": observaciones,
+                "ubicacion": ubicacion,
             }
             request.session["pedido_draft"] = _serialize_draft_for_session(draft)
             return redirect("crear_pedido")
