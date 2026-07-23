@@ -36,7 +36,7 @@ class ClienteAdmin(admin.ModelAdmin):
 
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
-    list_display = ("id_pedido", "vendedor_codigo", "cliente", "fecha", "estado", "total")
+    list_display = ("id_pedido", "vendedor_codigo", "cliente", "fecha", "estado", "total", "descuento", "total_con_descuento", "fecha_hora_creacion")
     search_fields = ("id_pedido", "vendedor_codigo", "cliente__codigo", "cliente__razon_social")
     list_filter = ("estado", "fecha")
 

@@ -20,6 +20,10 @@
         <label style="margin-top:8px; margin-bottom:4px;">Cliente</label>
         <input type="text" id="cliente-busqueda" name="cliente_busqueda" value="{{ draft.cliente_busqueda }}" placeholder="Escribi para buscar..." autocomplete="off" style="padding:8px 10px;">
         <div id="cliente-results"></div>
+        <label style="margin-top:8px; margin-bottom:4px;">Descuento %</label>
+        <input type="number" name="descuento" value="{{ draft.descuento|default:'0' }}" min="0" max="100" step="0.01" style="padding:8px 10px;">
+        <label style="margin-top:8px; margin-bottom:4px;">Observaciones</label>
+        <input type="text" name="observaciones" value="{{ draft.observaciones|default:'' }}" maxlength="200" placeholder="Observaciones..." style="padding:8px 10px;">
         <button type="submit" class="btn btn-primary" style="margin-top:8px;">Buscar cliente</button>
     </form>
 
@@ -31,6 +35,8 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="seleccionar_cliente">
             <input type="hidden" name="cliente_codigo" value="{{ cliente.codigo }}">
+            <input type="hidden" name="descuento" value="{{ draft.descuento|default:'0' }}">
+            <input type="hidden" name="observaciones" value="{{ draft.observaciones|default:'' }}">
             <div class="result-item" onclick="this.submit();">
                 <strong>{{ cliente.codigo }}</strong> - {{ cliente.razon_social }}
                 {% if cliente.nombre_fantasia != '-' %}<br><small>{{ cliente.nombre_fantasia }}</small>{% endif %}
@@ -119,6 +125,16 @@
         <span class="label" style="color:var(--gray-900);">Total</span>
         <span class="value" style="font-size:16px; color:var(--primary);">${{ total_pedido }}</span>
     </div>
+    {% if draft.descuento and draft.descuento != "0" %}
+    <div class="info-row" style="padding:2px 0;">
+        <span class="label" style="color:var(--gray-500); font-size:12px;">Descuento {{ draft.descuento }}%</span>
+        <span class="value" style="font-size:13px; color:var(--danger);">-${{ descuento_monto }}</span>
+    </div>
+    <div class="info-row" style="padding:4px 0; border-top:1px solid var(--gray-200);">
+        <span class="label" style="color:var(--gray-900); font-weight:700;">Total c/ descuento</span>
+        <span class="value" style="font-size:18px; color:var(--success);">${{ total_con_descuento }}</span>
+    </div>
+    {% endif %}
     {% endif %}
 
     {% if pending_item %}

@@ -323,6 +323,8 @@ def crear_pedido(request):
             "warning_stock": "",
             "cliente_busqueda": "",
             "cliente_results": [],
+            "descuento": "0",
+            "observaciones": "",
         }
 
     cliente = None
@@ -438,6 +440,14 @@ def crear_pedido(request):
         if action == "seleccionar_cliente":
             fecha = draft.get("fecha", today)
             cliente_codigo = request.POST.get("cliente_codigo", "").strip()
+            descuento = request.POST.get("descuento", "0").strip() or "0"
+            observaciones = request.POST.get("observaciones", "").strip()
+            try:
+                descuento_val = Decimal(descuento)
+                if descuento_val < 0 or descuento_val > 100:
+                    descuento_val = Decimal("0")
+            except Exception:
+                descuento_val = Decimal("0")
             cliente = _resolver_cliente(cliente_codigo)
             if not cliente:
                 draft["error"] = "No se pudo seleccionar el cliente."
@@ -455,6 +465,8 @@ def crear_pedido(request):
                 "error": "",
                 "cliente_busqueda": draft.get("cliente_busqueda", ""),
                 "cliente_results": [],
+                "descuento": str(descuento_val),
+                "observaciones": observaciones,
             }
             request.session["pedido_draft"] = _serialize_draft_for_session(draft)
             return redirect("crear_pedido")
@@ -603,13 +615,23 @@ def crear_pedido(request):
                     max_num = int(pid)
             next_num = (max_num // 100) + 1 if max_num > 0 else 1
             pedido_id = str(next_num * 100 + int(vendedor_codigo)).zfill(6)
+
+            descuento_val = Decimal(draft.get("descuento", "0") or "0")
+            total_con_descuento = total - (total * descuento_val / Decimal("100"))
+            ubicacion = draft.get("ubicacion", "")
+
             pedido = Pedido.objects.create(
                 id_pedido=pedido_id,
                 vendedor_codigo=vendedor_codigo,
                 cliente=cliente,
                 fecha=datetime.now().date(),
+                fecha_hora_creacion=datetime.now(),
                 estado="pendiente",
                 total=total,
+                descuento=descuento_val,
+                total_con_descuento=total_con_descuento,
+                observaciones=draft.get("observaciones", ""),
+                ubicacion=ubicacion,
             )
             for articulo, cantidad_dec, precio, subtotal in detalles:
                 DetallePedido.objects.create(
@@ -628,7 +650,7 @@ def crear_pedido(request):
             detail_path = vendor_dir / f"detallePedido_ven{vendedor_codigo}_{timestamp}.csv"
 
             with header_path.open("w", encoding="utf-8", newline="") as handle:
-                writer = csv.DictWriter(handle, fieldnames=["id_pedido", "vendedor_codigo", "cliente_codigo", "fecha", "estado", "total"])
+                writer = csv.DictWriter(handle, fieldnames=["id_pedido", "vendedor_codigo", "cliente_codigo", "fecha", "estado", "total", "descuento", "total_con_descuento", "observaciones", "ubicacion", "fecha_hora_creacion"])
                 writer.writeheader()
                 writer.writerow({
                     "id_pedido": pedido.id_pedido,
@@ -637,6 +659,11 @@ def crear_pedido(request):
                     "fecha": pedido.fecha,
                     "estado": pedido.estado,
                     "total": pedido.total,
+                    "descuento": pedido.descuento,
+                    "total_con_descuento": pedido.total_con_descuento,
+                    "observaciones": pedido.observaciones,
+                    "ubicacion": pedido.ubicacion,
+                    "fecha_hora_creacion": pedido.fecha_hora_creacion,
                 })
 
             with detail_path.open("w", encoding="utf-8", newline="") as handle:
@@ -662,6 +689,10 @@ def crear_pedido(request):
         if lista:
             cliente_lista_nombre = lista.nombre
 
+    descuento_val = Decimal(draft.get("descuento", "0") or "0")
+    descuento_monto = total_pedido * descuento_val / Decimal("100")
+    total_con_descuento = total_pedido - descuento_monto
+
     return render(request, "crear_pedido.html", {
         "draft": draft,
         "cliente": cliente,
@@ -672,6 +703,8 @@ def crear_pedido(request):
         "articulos_sugeridos": articulos_sugeridos,
         "cliente_lista_nombre": cliente_lista_nombre,
         "precios_por_articulo": precios_por_articulo,
+        "descuento_monto": descuento_monto,
+        "total_con_descuento": total_con_descuento,
     })
 
 
@@ -684,7 +717,8 @@ def detalle_pedido(request, pedido_id):
     pedido = Pedido.objects.filter(id_pedido=pedido_id).first()
     if not pedido:
         return render(request, "detalle_pedido.html", {"error": "Pedido no encontrado"})
-    return render(request, "detalle_pedido.html", {"pedido": pedido})
+    descuento_monto = pedido.total * pedido.descuento / Decimal("100") if pedido.descuento else Decimal("0")
+    return render(request, "detalle_pedido.html", {"pedido": pedido, "descuento_monto": descuento_monto})
 
 
 def clientes(request):
@@ -762,7 +796,7 @@ def exportar_pedidos(request):
             detail_path = vendor_dir / f"detallePedido_ven{vendor_code}_{timestamp}.csv"
 
             with header_path.open("w", encoding="utf-8", newline="") as handle:
-                writer = csv.DictWriter(handle, fieldnames=["id_pedido", "vendedor_codigo", "cliente_codigo", "fecha", "estado", "total"])
+                writer = csv.DictWriter(handle, fieldnames=["id_pedido", "vendedor_codigo", "cliente_codigo", "fecha", "estado", "total", "descuento", "total_con_descuento", "observaciones", "ubicacion", "fecha_hora_creacion"])
                 writer.writeheader()
                 for pedido in pedidos.filter(vendedor_codigo=vendor_code):
                     writer.writerow({
@@ -772,6 +806,11 @@ def exportar_pedidos(request):
                         "fecha": pedido.fecha,
                         "estado": pedido.estado,
                         "total": pedido.total,
+                        "descuento": pedido.descuento,
+                        "total_con_descuento": pedido.total_con_descuento,
+                        "observaciones": pedido.observaciones,
+                        "ubicacion": pedido.ubicacion,
+                        "fecha_hora_creacion": pedido.fecha_hora_creacion,
                     })
 
             with detail_path.open("w", encoding="utf-8", newline="") as handle:
@@ -845,13 +884,21 @@ def api_sync(request):
         pedido_id = str(next_num * 100 + int(vendedor_codigo)).zfill(6)
 
         total = Decimal('0')
+        descuento_val = Decimal(str(pedido_info.get('descuento', 0)))
+        observaciones = pedido_info.get('observaciones', '')
+        ubicacion = pedido_info.get('ubicacion', '')
         pedido = Pedido.objects.create(
             id_pedido=pedido_id,
             vendedor_codigo=vendedor_codigo,
             cliente=cliente,
             fecha=datetime.now().date(),
+            fecha_hora_creacion=datetime.now(),
             estado='pendiente',
             total=0,
+            descuento=descuento_val,
+            total_con_descuento=0,
+            observaciones=observaciones,
+            ubicacion=ubicacion,
         )
 
         for item in items:
@@ -873,6 +920,7 @@ def api_sync(request):
             articulo.save(update_fields=["stock"])
 
         pedido.total = total
+        pedido.total_con_descuento = total - (total * descuento_val / Decimal("100"))
         pedido.save()
         synced += 1
 

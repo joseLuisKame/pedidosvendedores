@@ -117,6 +117,12 @@
         <input type="text" id="cliente-input" placeholder="Escribi para buscar..." style="padding:8px 10px; font-size:14px;">
         <div id="cliente-results"></div>
 
+        <label>Descuento %</label>
+        <input type="number" id="descuento-input" value="0" min="0" max="100" step="0.01" style="padding:8px 10px; font-size:14px;">
+
+        <label>Observaciones</label>
+        <input type="text" id="observaciones-input" maxlength="200" placeholder="Observaciones..." style="padding:8px 10px; font-size:14px;">
+
         <button onclick="confirmarCliente()" style="font-size:13px; padding:8px;">Confirmar cliente</button>
     </div>
 
@@ -253,6 +259,17 @@ async function init() {
 
         document.getElementById('error-msg').textContent = '';
         document.getElementById('status-msg').textContent = 'App lista';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    window._ubicacion = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+                },
+                function(err) {
+                    window._ubicacion = '';
+                }
+            );
+        }
     } catch (err) {
         document.getElementById('error-msg').textContent = 'Error: ' + err.message;
     }
@@ -430,6 +447,9 @@ async function guardarPedido() {
         fecha: document.getElementById('fecha').value,
         cliente_codigo: clienteActual.codigo,
         vendedor_codigo: clienteActual.codigo_vendedor || '',
+        descuento: document.getElementById('descuento-input').value || '0',
+        observaciones: document.getElementById('observaciones-input').value || '',
+        ubicacion: window._ubicacion || '',
         items: items
     };
     await putItem('pedidosPendientes', pedido);

@@ -11,9 +11,18 @@
     <div class="info-row"><span class="label">Cliente</span><span class="value">{{ pedido.cliente.razon_social }}</span></div>
     <div class="info-row"><span class="label">Vendedor</span><span class="value">{{ pedido.vendedor_codigo }}</span></div>
     <div class="info-row"><span class="label">Estado</span><span class="value"><span class="badge badge-pending">{{ pedido.estado }}</span></span></div>
-    
-    <h4 style="margin-top:20px;">Items</h4>
-    <div class="table-wrapper">
+    {% if pedido.observaciones %}
+    <div class="info-row"><span class="label">Observaciones</span><span class="value">{{ pedido.observaciones }}</span></div>
+    {% endif %}
+    {% if pedido.ubicacion %}
+    <div class="info-row"><span class="label">Ubicacion</span><span class="value">{{ pedido.ubicacion }}</span></div>
+    {% endif %}
+    {% if pedido.fecha_hora_creacion %}
+    <div class="info-row"><span class="label">Creado</span><span class="value">{{ pedido.fecha_hora_creacion|date:"d/m/Y H:i" }}</span></div>
+    {% endif %}
+
+    <h4 style="margin-top:16px;">Items</h4>
+    <div style="max-height:40vh; overflow-y:auto; border:1px solid var(--gray-200); border-radius:var(--radius-sm);">
         <table>
             <tr><th>Articulo</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr>
             {% for detalle in pedido.detalles.all %}
@@ -26,11 +35,21 @@
             {% endfor %}
         </table>
     </div>
-    <div class="info-row" style="margin-top:12px; border-top:2px solid var(--gray-200); padding-top:16px;">
-        <span class="label" style="font-size:16px; color:var(--gray-900);">Total</span>
-        <span class="value" style="font-size:20px; color:var(--primary);">${{ pedido.total }}</span>
+    <div class="info-row" style="border-top:2px solid var(--gray-200); padding-top:8px;">
+        <span class="label" style="color:var(--gray-900);">Total</span>
+        <span class="value" style="font-size:16px; color:var(--primary);">${{ pedido.total }}</span>
     </div>
-    <a href="/pedidos/" class="btn btn-outline" style="text-decoration:none; margin-top:16px;">Volver</a>
+    {% if pedido.descuento and pedido.descuento != "0" %}
+    <div class="info-row" style="padding:2px 0;">
+        <span class="label" style="color:var(--gray-500); font-size:12px;">Descuento {{ pedido.descuento }}%</span>
+        <span class="value" style="font-size:13px; color:var(--danger);">-${{ descuento_monto }}</span>
+    </div>
+    <div class="info-row" style="padding:4px 0; border-top:1px solid var(--gray-200);">
+        <span class="label" style="color:var(--gray-900); font-weight:700;">Total c/ descuento</span>
+        <span class="value" style="font-size:18px; color:var(--success);">${{ pedido.total_con_descuento }}</span>
+    </div>
+    {% endif %}
+    <a href="/pedidos/" class="btn btn-outline" style="text-decoration:none; margin-top:12px;">Volver</a>
     {% endif %}
 </div>
 {% endblock %}

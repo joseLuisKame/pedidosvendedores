@@ -59,8 +59,13 @@ class Pedido(models.Model):
     vendedor_codigo = models.CharField(max_length=10)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
     fecha = models.DateField()
+    fecha_hora_creacion = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=20, default="pendiente")
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    descuento = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    total_con_descuento = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    observaciones = models.CharField(max_length=200, blank=True)
+    ubicacion = models.CharField(max_length=200, blank=True)
 
 
 class DetallePedido(models.Model):

@@ -3,7 +3,7 @@
 <div class="card">
     <h3>Pedidos</h3>
     {% if pedidos %}
-    <div class="table-wrapper">
+    <div style="max-height:60vh; overflow-y:auto; border:1px solid var(--gray-200); border-radius:var(--radius-sm);">
         <table>
             <tr><th>#</th><th>Cliente</th><th>Estado</th><th>Total</th></tr>
             {% for pedido in pedidos %}
@@ -11,7 +11,7 @@
                 <td><strong>{{ pedido.id_pedido }}</strong></td>
                 <td>{{ pedido.cliente.razon_social }}</td>
                 <td><span class="badge badge-pending">{{ pedido.estado }}</span></td>
-                <td><strong>${{ pedido.total }}</strong></td>
+                <td><strong>${{ pedido.total_con_descuento|default:pedido.total }}</strong></td>
             </tr>
             {% endfor %}
         </table>
