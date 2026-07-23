@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import Articulo, Cliente, ListaPrecio, PrecioArticulo, Pedido, DetallePedido, Vendedor
 
 
@@ -36,9 +37,22 @@ class ClienteAdmin(admin.ModelAdmin):
 
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
-    list_display = ("id_pedido", "vendedor_codigo", "cliente", "fecha", "estado", "total", "descuento", "total_con_descuento", "fecha_hora_creacion")
+    list_display = ("id_pedido", "vendedor_codigo", "cliente", "fecha", "estado", "total", "descuento", "total_con_descuento", "ubicacion_link", "fecha_hora_creacion")
     search_fields = ("id_pedido", "vendedor_codigo", "cliente__codigo", "cliente__razon_social")
     list_filter = ("estado", "fecha")
+
+    def ubicacion_link(self, obj):
+        if obj.ubicacion and ',' in obj.ubicacion:
+            parts = obj.ubicacion.split(',')
+            try:
+                lat = parts[0].strip()
+                lng = parts[1].strip()
+                url = f"https://www.google.com/maps?q={lat},{lng}"
+                return format_html('<a href="{}" target="_blank">Mostrar</a>', url)
+            except Exception:
+                return '-'
+        return '-'
+    ubicacion_link.short_description = 'Ubicacion'
 
 
 @admin.register(DetallePedido)
