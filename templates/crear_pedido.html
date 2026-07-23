@@ -15,33 +15,30 @@
         {% csrf_token %}
         <input type="hidden" name="action" id="action-field" value="crear_cabecera">
         <input type="hidden" name="cliente_codigo" id="cliente-codigo-field" value="">
+        <input type="hidden" name="ubicacion" id="ubicacion-field" value="">
         <label style="margin-top:8px; margin-bottom:4px;">Fecha</label>
         <input type="date" name="fecha" value="{{ draft.fecha }}" required style="padding:8px 10px;">
         <label style="margin-top:8px; margin-bottom:4px;">Cliente</label>
         <input type="text" id="cliente-busqueda" name="cliente_busqueda" value="{{ draft.cliente_busqueda }}" placeholder="Escribi para buscar..." autocomplete="off" style="padding:8px 10px;">
         <div id="cliente-results"></div>
         <label style="margin-top:8px; margin-bottom:4px;">Descuento %</label>
-        <input type="number" name="descuento" value="{{ draft.descuento|default:'0' }}" min="0" max="100" step="0.01" style="padding:8px 10px;">
+        <input type="number" name="descuento" id="descuento-field" value="{{ draft.descuento|default:'0' }}" min="0" max="100" step="0.01" style="padding:8px 10px;" onclick="this.select();">
         <label style="margin-top:8px; margin-bottom:4px;">Observaciones</label>
         <input type="text" name="observaciones" value="{{ draft.observaciones|default:'' }}" maxlength="200" placeholder="Observaciones..." style="padding:8px 10px;">
         <button type="submit" class="btn btn-primary" style="margin-top:8px;">Buscar cliente</button>
     </form>
+    <div id="confirmar-cliente-btn" style="display:none; margin-top:8px;">
+        <button onclick="confirmarClienteSeleccionado()" class="btn btn-success">Confirmar cliente</button>
+    </div>
 
     {% if draft.cliente_results %}
     <div style="margin-top:12px;">
         <label style="margin-bottom:4px;">Selecciona un cliente</label>
         {% for cliente in draft.cliente_results %}
-        <form method="post">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="seleccionar_cliente">
-            <input type="hidden" name="cliente_codigo" value="{{ cliente.codigo }}">
-            <input type="hidden" name="descuento" value="{{ draft.descuento|default:'0' }}">
-            <input type="hidden" name="observaciones" value="{{ draft.observaciones|default:'' }}">
-            <div class="result-item" onclick="this.submit();">
-                <strong>{{ cliente.codigo }}</strong> - {{ cliente.razon_social }}
-                {% if cliente.nombre_fantasia != '-' %}<br><small>{{ cliente.nombre_fantasia }}</small>{% endif %}
-            </div>
-        </form>
+        <div class="result-item" onclick="seleccionarCliente('{{ cliente.codigo }}', '{{ cliente.razon_social|escapejs }}')">
+            <strong>{{ cliente.codigo }}</strong> - {{ cliente.razon_social }}
+            {% if cliente.nombre_fantasia != '-' %}<br><small>{{ cliente.nombre_fantasia }}</small>{% endif %}
+        </div>
         {% endfor %}
     </div>
     {% endif %}
@@ -170,6 +167,8 @@
 
 {% block scripts %}
 <script>
+    let clienteSeleccionado = null;
+
     const clientes = [
         {% for c in clientes_sugeridos %}
         { codigo: "{{ c.codigo }}", razon_social: "{{ c.razon_social }}", nombre_fantasia: "{{ c.nombre_fantasia }}" }{% if not forloop.last %},{% endif %}
@@ -182,14 +181,40 @@
     ];
     const preciosPorArticulo = {{ precios_por_articulo|safe }};
 
+    function seleccionarCliente(codigo, razonSocial) {
+        clienteSeleccionado = codigo;
+        document.getElementById('cliente-busqueda').value = codigo + ' - ' + razonSocial;
+        document.getElementById('cliente-codigo-field').value = codigo;
+        document.getElementById('cliente-results').innerHTML = '<div class="result-item" style="background:var(--success-light); border-color:var(--success);"><strong>' + codigo + '</strong> - ' + razonSocial + '</div>';
+        document.getElementById('confirmar-cliente-btn').style.display = 'block';
+    }
+
+    function confirmarClienteSeleccionado() {
+        if (!clienteSeleccionado) return;
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(pos) {
+                document.getElementById('ubicacion-field').value = pos.coords.latitude.toFixed(6) + ', ' + pos.coords.longitude.toFixed(6);
+                document.getElementById('action-field').value = 'seleccionar_cliente';
+                document.getElementById('form-cliente').submit();
+            }, function() {
+                document.getElementById('action-field').value = 'seleccionar_cliente';
+                document.getElementById('form-cliente').submit();
+            });
+        } else {
+            document.getElementById('action-field').value = 'seleccionar_cliente';
+            document.getElementById('form-cliente').submit();
+        }
+    }
+
     const clienteInput = document.getElementById('cliente-busqueda');
     const clienteResults = document.getElementById('cliente-results');
     if (clienteInput && clienteResults) {
         clienteInput.addEventListener('input', function() {
             const q = this.value.trim().toLowerCase();
-            if (!q) { clienteResults.innerHTML = ''; return; }
+            if (!q) { clienteResults.innerHTML = ''; document.getElementById('confirmar-cliente-btn').style.display = 'none'; return; }
             const f = clientes.filter(c => c.codigo.toLowerCase().includes(q) || c.razon_social.toLowerCase().includes(q) || (c.nombre_fantasia && c.nombre_fantasia.toLowerCase().includes(q))).slice(0, 5);
-            clienteResults.innerHTML = f.length ? f.map(c => `<div class="result-item" onclick="document.getElementById('cliente-busqueda').value='${c.codigo} - ${c.razon_social}'; document.getElementById('action-field').value='seleccionar_cliente'; document.getElementById('cliente-codigo-field').value='${c.codigo}'; document.getElementById('form-cliente').submit();"><strong>${c.codigo}</strong> - ${c.razon_social}</div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
+            clienteResults.innerHTML = f.length ? f.map(c => `<div class="result-item" onclick="seleccionarCliente('${c.codigo}', '${c.razon_social.replace(/'/g, "\\'")}')"><strong>${c.codigo}</strong> - ${c.razon_social}</div>`).join('') : '<p style="color:var(--gray-400); margin-top:8px;">No encontrado</p>';
+            document.getElementById('confirmar-cliente-btn').style.display = 'none';
         });
     }
 
